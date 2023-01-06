@@ -1,0 +1,11 @@
+<?php
+namespace Module\{%uModuleName%}\V1\Service;
+
+use App\Service\BaseService;
+use Module\{%uModuleName%}\V1\Entity\{%entityName%};
+
+class {%entityName%}Service extends BaseService
+{
+    protected const DATABASE = '{%lModuleName%}';
+    protected const ENTITY = 'Module\{%uModuleName%}\V1\Entity\{%entityName%}';
+}

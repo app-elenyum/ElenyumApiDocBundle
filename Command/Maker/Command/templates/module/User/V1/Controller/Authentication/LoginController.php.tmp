@@ -1,0 +1,109 @@
+<?php
+
+namespace Module\User\V1\Controller\Authentication;
+
+use Elenyum\ApiDocBundle\Controller\BaseController;
+use Exception;
+use Module\User\V1\Entity\User;
+use Module\User\V1\Service\UserService;
+use Elenyum\ApiDocBundle\Annotation\Security;
+use OpenApi\Attributes as OA;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Serializer\Exception\ExceptionInterface;
+
+#[OA\Response(
+    response: 200,
+    description: 'login user by username (email) and password',
+    content: new OA\JsonContent(
+        properties: [
+            new OA\Property(property: 'success', type: 'boolean', default: true),
+            new OA\Property(property: 'code', type: 'integer', default: 200),
+            new OA\Property(
+                property: 'item',
+                properties: [
+                    new OA\Property(property: 'id', type: 'integer'),
+                    new OA\Property(property: 'name', type: 'string'),
+                    new OA\Property(property: 'email', type: 'string'),
+                    new OA\Property(property: 'password', type: 'string'),
+                    new OA\Property(property: 'status', type: 'integer'),
+                    new OA\Property(property: 'phone', type: 'string'),
+                    new OA\Property(property: 'address', type: 'string'),
+                    new OA\Property(property: 'createdAt', type: 'datetime'),
+                    new OA\Property(property: 'updatedAt', type: 'datetime'),
+                    new OA\Property(property: 'roles', type: 'array', items: new OA\Items(type: 'string', example: 'ROLE_USER')),
+                    new OA\Property(property: 'username', type: 'string', example: 'you@email.com'),
+                    new OA\Property(property: 'session', type: 'string', example: '2ff1cc75f2311df8f55cb50d6b2bd3e3'),
+                ]
+            ),
+        ]
+    )
+)]
+#[OA\RequestBody(
+    description: 'Model user for login data',
+    content: new OA\JsonContent(
+        properties: [
+            new OA\Property(property: 'password', type: 'string'),
+            new OA\Property(property: 'username', type: 'string', example: 'you@email.com'),
+        ]
+    )
+)]
+#[OA\Response(
+    response: 417,
+    description: 'Returns error',
+    content: new OA\JsonContent(
+        properties: [
+            new OA\Property(property: 'success', type: 'boolean', default: false),
+            new OA\Property(property: 'code', type: 'integer'),
+            new OA\Property(property: 'message', type: 'string'),
+        ]
+    )
+)]
+#[OA\Response(
+    response: 401,
+    description: 'Returns error',
+    content: new OA\JsonContent(
+        properties: [
+            new OA\Property(property: 'error', type: 'string'),
+        ]
+    )
+)]
+#[Security(name: null)]
+#[OA\Tag(name: 'Authentication')]
+#[Route(path: '/v1/user/login', name: 'userLogin', methods: Request::METHOD_POST)]
+class LoginController extends BaseController
+{
+    /**
+     * @throws Exception
+     * @throws ExceptionInterface
+     */
+    final public function __invoke(UserService $service): Response
+    {
+        try {
+            //Check access
+            $this->denyAccessUnlessGranted('IS_AUTHENTICATED');
+
+            $user = $this->getUser();
+            if (!$user instanceof User) {
+                throw new Exception('Entity not found');
+            }
+
+            $item = $service->toArray($user);
+            $item['session'] = $service->getSessionId();
+            unset($item['salt'], $item['userIdentifier']);
+
+            return $this->json([
+                'success' => true,
+                'code' => Response::HTTP_OK,
+                'item' => $item,
+            ]);
+        } catch (Exception $e) {
+            return $this->json([
+                'success' => false,
+                'code' => Response::HTTP_EXPECTATION_FAILED,
+                'message' => $e->getMessage(),
+            ]);
+        }
+    }
+}

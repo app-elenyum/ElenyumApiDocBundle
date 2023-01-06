@@ -1,0 +1,108 @@
+<?php
+
+namespace Module\User\V1\Controller;
+
+use Elenyum\ApiDocBundle\Controller\BaseController;
+use Elenyum\ApiDocBundle\Exception\UndefinedEntity;
+use Elenyum\ApiDocBundle\Repository\GetItemForPutInterface;
+use Elenyum\ApiDocBundle\Validator\ValidationException;
+use Exception;
+use Module\User\V1\Entity\User;
+use Module\User\V1\Service\UserService;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
+use OpenApi\Attributes as OA;
+use Elenyum\ApiDocBundle\Annotation\Model;
+use Elenyum\ApiDocBundle\Annotation\Security;
+
+//Update a REST API resource
+#[OA\RequestBody(
+    description: 'Model user for update data',
+    content: new OA\JsonContent(
+        ref: new Model(type: User::class, groups: ["put"])
+    )
+)]
+#[OA\Response(
+    response: 200,
+    description: 'Returns error if invalid data',
+    content: new OA\JsonContent(
+        properties: [
+            new OA\Property(property: 'success', type: 'boolean', default: false),
+            new OA\Property(property: 'code', type: 'integer'),
+            new OA\Property(
+                property: 'item',
+                ref: new Model(type: User::class, groups: ["put"])
+            ),
+        ]
+    )
+)]
+#[OA\Response(
+    response: 400,
+    description: 'Returns error if invalid data',
+    content: new OA\JsonContent(
+        properties: [
+            new OA\Property(property: 'success', type: 'boolean', default: false),
+            new OA\Property(property: 'code', type: 'integer'),
+            new OA\Property(property: 'message', type: 'integer'),
+            new OA\Property(property: 'errors', type: 'array', items: new OA\Items(type: 'string'))
+        ]
+    )
+)]
+#[OA\Response(
+    response: 417,
+    description: 'Returns error',
+    content: new OA\JsonContent(
+        properties: [
+            new OA\Property(property: 'success', type: 'boolean', default: false),
+            new OA\Property(property: 'code', type: 'integer'),
+            new OA\Property(property: 'message', type: 'integer'),
+        ]
+    )
+)]
+#[Security(name: null)]
+#[OA\Tag(name: 'User')]
+#[Route(path: '/v1/user/{id<\d+>}', name: 'userPut', methods: Request::METHOD_PUT)]
+class PutController extends BaseController
+{
+    final public function __invoke(int $id, Request $request, UserService $service): Response
+    {
+        try {
+            //Check access
+            $this->denyAccessUnlessGranted('IS_AUTHENTICATED');
+
+            $repository = $service->getRepository();
+            if (!$repository instanceof GetItemForPutInterface) {
+                throw new Exception('Repository not implements GetItemForPutInterface');
+            }
+            $item = $repository->getItemForPut($id);
+            if (!$item instanceof User) {
+                throw new UndefinedEntity(User::class, $id);
+            }
+
+            $service->updateEntity($item, $request->getContent());
+            $service->hashPassword($item);
+            $service->getEntityManager()->flush();
+
+            return $this->json([
+                'success' => true,
+                'code' => Response::HTTP_OK,
+                'item' => $item->toArray('put'),
+            ]);
+        } catch (ValidationException $e) {
+            return $this->json([
+                'success' => false,
+                'code' => Response::HTTP_EXPECTATION_FAILED,
+                'message' => $e->getMessage(),
+                'errors' => json_decode($e->getMessage()),
+            ]);
+        } catch (Exception $e) {
+            return $this->json([
+                'success' => false,
+                'code' => Response::HTTP_EXPECTATION_FAILED,
+                'message' => $e->getMessage(),
+            ]);
+        }
+    }
+
+}

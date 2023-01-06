@@ -1,0 +1,63 @@
+<?php
+
+namespace Module\User\V1\Controller\Authentication;
+
+use Elenyum\ApiDocBundle\Controller\BaseController;
+use Exception;
+use Symfony\Bundle\SecurityBundle\Security as Session;
+use Module\User\V1\Service\UserService;
+use Elenyum\ApiDocBundle\Annotation\Security;
+use OpenApi\Attributes as OA;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
+
+#[OA\Response(
+    response: 200,
+    description: 'logout user',
+    content: new OA\JsonContent(
+        properties: [
+            new OA\Property(property: 'success', type: 'boolean', default: true),
+            new OA\Property(property: 'code', type: 'integer', default: 200),
+            new OA\Property(property: 'message', type: 'string'),
+        ]
+    )
+)]
+#[OA\Response(
+    response: 417,
+    description: 'Returns error',
+    content: new OA\JsonContent(
+        properties: [
+            new OA\Property(property: 'success', type: 'boolean', default: false),
+            new OA\Property(property: 'code', type: 'integer'),
+            new OA\Property(property: 'message', type: 'string'),
+        ]
+    )
+)]
+#[Security(name: null)]
+#[OA\Tag(name: 'Authentication')]
+#[Route(path: '/v1/user/logout', name: 'userLogout', methods: Request::METHOD_GET)]
+class LogoutController extends BaseController
+{
+    /**
+     * @throws Exception
+     */
+    final public function __invoke(UserService $service, Session $session): Response
+    {
+        $session->logout(false);
+        try {
+            //Check access
+            return $this->json([
+                'success' => true,
+                'code' => Response::HTTP_OK,
+                'message' => 'Is logout',
+            ]);
+        } catch (Exception $e) {
+            return $this->json([
+                'success' => false,
+                'code' => Response::HTTP_EXPECTATION_FAILED,
+                'message' => $e->getMessage(),
+            ]);
+        }
+    }
+}

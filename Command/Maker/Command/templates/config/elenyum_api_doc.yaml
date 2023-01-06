@@ -1,0 +1,10 @@
+elenyum_api_doc:
+    documentation:
+        info:
+            title: Elenyum
+            description: Elenyum is an awesome app!
+            version: 0.0.1
+
+    areas: # to filter documented areas
+        path_patterns:
+            - ^/v1

@@ -1,0 +1,7 @@
+preset: symfony
+
+enabled:
+  - ordered_use
+
+disabled:
+  - unalign_equals

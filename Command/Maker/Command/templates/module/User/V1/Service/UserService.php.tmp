@@ -1,0 +1,43 @@
+<?php
+
+namespace Module\User\V1\Service;
+
+use Elenyum\ApiDocBundle\Service\BaseService;
+use Elenyum\ApiDocBundle\Validator\ValidInterface;
+use Doctrine\Persistence\ManagerRegistry;
+use Module\User\V1\Entity\User;
+use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+
+class UserService extends BaseService
+{
+    protected const DATABASE = 'user';
+    protected const ENTITY = 'Module\User\V1\Entity\User';
+
+    public function __construct(
+        private readonly RequestStack $requestStack,
+        private readonly UserPasswordHasherInterface $passwordHasher
+    ) {
+    }
+
+    /**
+     * @return string
+     */
+    public function getSessionId(): string
+    {
+        return $this->requestStack->getSession()->getId();
+    }
+
+    public function hashPassword(User $user)
+    {
+        $user->setPassword(
+            $this->passwordHasher->hashPassword(
+                $user,
+                $user->getPassword()
+            )
+        );
+    }
+}

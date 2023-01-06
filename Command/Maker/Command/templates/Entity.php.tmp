@@ -1,0 +1,64 @@
+<?php
+
+namespace Module\{%uModuleName%}\V1\Entity;
+
+use App\Entity\BaseEntity;
+use Doctrine\ORM\Mapping as ORM;
+use Module\{%uModuleName%}\V1\Repository\{%repositoryName%};
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Serializer\Annotation\Groups;
+use DateTimeImmutable;
+use Doctrine\DBAL\Types\Types;
+
+#[ORM\Entity(repositoryClass: {%repositoryName%}::class)]
+#[ORM\Table(name: '{%lModuleName%}')]
+class {%entityName%} extends BaseEntity
+{
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
+    #[Groups(['get', 'list', 'post', 'put', 'del'])]
+    private int $id;
+
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: false)]
+    #[Groups(['get', 'list'])]
+    private DateTimeImmutable $createdAt;
+
+    public function __construct()
+    {
+        $this->setCreatedAt(new DateTimeImmutable());
+    }
+
+    /**
+     * @return int
+     */
+    public function getId(): int
+    {
+        return $this->id;
+    }
+
+    /**
+     * @param int $id
+     */
+    public function setId(int $id): void
+    {
+        $this->id = $id;
+    }
+
+    /**
+     * @return DateTimeImmutable
+     */
+    public function getCreatedAt(): DateTimeImmutable
+    {
+        return $this->createdAt;
+    }
+
+    /**
+     * @param DateTimeImmutable $createdAt
+     * @return void
+     */
+    public function setCreatedAt(DateTimeImmutable $createdAt): void
+    {
+        $this->createdAt = $createdAt;
+    }
+}

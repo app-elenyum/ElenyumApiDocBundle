@@ -1,0 +1,6 @@
+Elenyum\ApiDocBundle\Tests\Functional\Entity\SymfonyDiscriminatorFileMapping:
+    discriminator_map:
+        type_property: type
+        mapping:
+            one: Elenyum\ApiDocBundle\Tests\Functional\Entity\SymfonyDiscriminatorOne
+            two: Elenyum\ApiDocBundle\Tests\Functional\Entity\SymfonyDiscriminatorTwo

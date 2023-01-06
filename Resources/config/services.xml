@@ -1,0 +1,186 @@
+<?xml version="1.0" ?>
+<container xmlns="http://symfony.com/schema/dic/services"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
+
+    <services>
+        <defaults autowire="true" autoconfigure="true"/>
+        <!-- Commands -->
+        <service id="elenyum_api_doc.command.dump" class="Elenyum\ApiDocBundle\Command\DumpCommand" public="true">
+            <argument type="service" id="elenyum_api_doc.render_docs"/>
+            <tag name="console.command" command="elenyum:apidoc:dump"/>
+        </service>
+        <service id="elenyum_api_doc.module.create" class="Elenyum\ApiDocBundle\Command\Maker\Command\CreateModule"
+                 public="true">
+            <argument type="service" id="filesystem"/>
+            <argument type="service" id="App\Kernel"/>
+            <tag name="console.command" command="elenyum:module:create"/>
+        </service>
+        <service id="elenyum_api_doc.module.init" class="Elenyum\ApiDocBundle\Command\Maker\Command\InitModule"
+                 public="true">
+            <argument type="service" id="filesystem"/>
+            <argument type="service" id="App\Kernel"/>
+            <tag name="console.command" command="elenyum:module:init"/>
+        </service>
+
+        <!-- Validator -->
+        <service id="Elenyum\ApiDocBundle\Validator\ValidInterface" class="Elenyum\ApiDocBundle\Validator\Valid" public="true">
+            <argument type="service" id="validator"/>
+        </service>
+
+        <service id="Elenyum\ApiDocBundle\Service\ConfigInterface" class="Elenyum\ApiDocBundle\Service\Config" public="true"/>
+
+        <service id="elenyum_api_doc.service.service_base" class="Elenyum\ApiDocBundle\Service\BaseService"
+                 public="true" autowire="true">
+            <call method="setConfig">
+                <argument type="service" id="Elenyum\ApiDocBundle\Service\ConfigInterface"/>
+            </call>
+        </service>
+
+        <!-- Controllers -->
+        <service id="elenyum_api_doc.controller.swagger_ui" class="Elenyum\ApiDocBundle\Controller\SwaggerUiController"
+                 public="true">
+            <argument type="service" id="elenyum_api_doc.render_docs"/>
+        </service>
+
+        <service id="elenyum_api_doc.controller.swagger" alias="elenyum_api_doc.controller.swagger_json" public="true"/>
+
+        <service id="elenyum_api_doc.controller.swagger_json"
+                 class="Elenyum\ApiDocBundle\Controller\DocumentationController" public="true">
+            <argument type="service" id="elenyum_api_doc.render_docs"/>
+        </service>
+
+        <service id="elenyum_api_doc.controller.swagger_yaml"
+                 class="Elenyum\ApiDocBundle\Controller\YamlDocumentationController" public="true">
+            <argument type="service" id="elenyum_api_doc.render_docs"/>
+        </service>
+
+        <!-- Render -->
+        <service id="elenyum_api_doc.render_docs" class="Elenyum\ApiDocBundle\Render\RenderOpenApi" public="true">
+            <argument type="service" id="elenyum_api_doc.generator_locator"/>
+            <argument type="service" id="elenyum_api_doc.render_docs.json"/>
+            <argument type="service" id="elenyum_api_doc.render_docs.yaml"/>
+            <argument type="service" id="elenyum_api_doc.render_docs.html" on-invalid="ignore"/>
+        </service>
+        <service id="elenyum_api_doc.render_docs.html" class="Elenyum\ApiDocBundle\Render\Html\HtmlOpenApiRenderer"
+                 public="false">
+            <argument type="service" id="twig"/>
+        </service>
+        <service id="elenyum_api_doc.render_docs.html.asset" class="Elenyum\ApiDocBundle\Render\Html\GetElenyumAsset"
+                 public="false">
+            <argument type="service" id="twig.extension.assets"/>
+
+            <tag name="twig.extension"/>
+        </service>
+        <service id="elenyum_api_doc.render_docs.json" class="Elenyum\ApiDocBundle\Render\Json\JsonOpenApiRenderer"
+                 public="false">
+        </service>
+        <service id="elenyum_api_doc.render_docs.yaml" class="Elenyum\ApiDocBundle\Render\Yaml\YamlOpenApiRenderer"
+                 public="false">
+        </service>
+
+        <!-- Swagger Spec Generator -->
+        <service id="elenyum_api_doc.generator" alias="elenyum_api_doc.generator.default" public="true"/>
+
+        <service id="elenyum_api_doc.controller_reflector" class="Elenyum\ApiDocBundle\Util\ControllerReflector"
+                 public="false">
+            <argument type="service" id="service_container"/>
+        </service>
+
+        <!-- Describers -->
+        <service id="elenyum_api_doc.describers.config" class="Elenyum\ApiDocBundle\Describer\ExternalDocDescriber"
+                 public="false">
+            <argument type="collection"/>
+
+            <tag name="elenyum_api_doc.describer" priority="1000"/>
+        </service>
+
+        <service id="elenyum_api_doc.describers.default" class="Elenyum\ApiDocBundle\Describer\DefaultDescriber"
+                 public="false">
+            <tag name="elenyum_api_doc.describer" priority="-1000"/>
+        </service>
+
+        <!-- Routing Describers -->
+        <service id="elenyum_api_doc.route_describers.route_metadata"
+                 class="Elenyum\ApiDocBundle\RouteDescriber\RouteMetadataDescriber" public="false">
+            <tag name="elenyum_api_doc.route_describer" priority="-300"/>
+        </service>
+
+        <!-- Model Describers -->
+        <service id="elenyum_api_doc.model_describers.object"
+                 class="Elenyum\ApiDocBundle\ModelDescriber\ObjectModelDescriber" public="false">
+            <argument type="service" id="property_info"/>
+            <argument type="service" id="annotations.reader"/>
+            <argument type="tagged" tag="elenyum_api_doc.object_model.property_describer"/>
+            <argument/>
+            <argument type="service" id="serializer.name_converter.metadata_aware" on-invalid="ignore"/>
+            <argument>%elenyum_api_doc.use_validation_groups%</argument>
+            <argument type="service" id="serializer.mapping.class_metadata_factory" on-invalid="ignore"/>
+
+            <tag name="elenyum_api_doc.model_describer"/>
+        </service>
+
+        <service id="elenyum_api_doc.model_describers.enum"
+                 class="Elenyum\ApiDocBundle\ModelDescriber\EnumModelDescriber" public="false">
+            <tag name="elenyum_api_doc.model_describer" priority="100"/>
+        </service>
+
+        <service id="elenyum_api_doc.model_describers.object_fallback"
+                 class="Elenyum\ApiDocBundle\ModelDescriber\FallbackObjectModelDescriber" public="false">
+            <tag name="elenyum_api_doc.model_describer" priority="-1000"/>
+        </service>
+
+        <!-- Property Describers -->
+        <service id="elenyum_api_doc.object_model.property_describers.array"
+                 class="Elenyum\ApiDocBundle\PropertyDescriber\ArrayPropertyDescriber" public="false">
+            <argument type="tagged" tag="elenyum_api_doc.object_model.property_describer"/>
+
+            <tag name="elenyum_api_doc.object_model.property_describer"/>
+        </service>
+
+        <service id="elenyum_api_doc.object_model.property_describers.boolean"
+                 class="Elenyum\ApiDocBundle\PropertyDescriber\BooleanPropertyDescriber" public="false">
+            <tag name="elenyum_api_doc.object_model.property_describer"/>
+        </service>
+
+        <service id="elenyum_api_doc.object_model.property_describers.float"
+                 class="Elenyum\ApiDocBundle\PropertyDescriber\FloatPropertyDescriber" public="false">
+            <tag name="elenyum_api_doc.object_model.property_describer"/>
+        </service>
+
+        <service id="elenyum_api_doc.object_model.property_describers.integer"
+                 class="Elenyum\ApiDocBundle\PropertyDescriber\IntegerPropertyDescriber" public="false">
+            <tag name="elenyum_api_doc.object_model.property_describer"/>
+        </service>
+
+        <service id="elenyum_api_doc.object_model.property_describers.string"
+                 class="Elenyum\ApiDocBundle\PropertyDescriber\StringPropertyDescriber" public="false">
+            <tag name="elenyum_api_doc.object_model.property_describer"/>
+        </service>
+
+        <service id="elenyum_api_doc.object_model.property_describers.date_time"
+                 class="Elenyum\ApiDocBundle\PropertyDescriber\DateTimePropertyDescriber" public="false">
+            <tag name="elenyum_api_doc.object_model.property_describer"/>
+        </service>
+
+        <service id="elenyum_api_doc.object_model.property_describers.object"
+                 class="Elenyum\ApiDocBundle\PropertyDescriber\ObjectPropertyDescriber" public="false">
+            <tag name="elenyum_api_doc.object_model.property_describer" priority="-1000"/>
+        </service>
+
+        <service id="elenyum_api_doc.object_model.property_describers.compound"
+                 class="Elenyum\ApiDocBundle\PropertyDescriber\CompoundPropertyDescriber" public="false">
+            <argument type="tagged" tag="elenyum_api_doc.object_model.property_describer"/>
+
+            <tag name="elenyum_api_doc.object_model.property_describer" priority="-1001"/>
+        </service>
+
+        <!-- Form Type Extensions -->
+
+        <service id="elenyum_api_doc.form.documentation_extension"
+                 class="Elenyum\ApiDocBundle\Form\Extension\DocumentationExtension">
+            <tag name="form.type_extension" extended-type="Symfony\Component\Form\Extension\Core\Type\FormType"/>
+        </service>
+    </services>
+
+</container>
