@@ -68,7 +68,7 @@ class InitModule extends Command
 
         $this->filesystem->copy(__DIR__.'/templates/module/User/V1/Service/UserService.php.tmp', $dir .'/module/User/V1/Service/UserService.php');
 
-        $this->filesystem->copy(__DIR__.'/templates/module/User/README.md', $dir .'/module/User/README.md');
+        $this->filesystem->copy(__DIR__.'/templates/module/User/README.md.tmp', $dir .'/module/User/README.md');
         /** Create module User END */
 
         $process = new Process(['composer', 'dump-autoload']);
