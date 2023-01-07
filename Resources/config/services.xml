@@ -8,19 +8,19 @@
         <!-- Commands -->
         <service id="elenyum_api_doc.command.dump" class="Elenyum\ApiDocBundle\Command\DumpCommand" public="true">
             <argument type="service" id="elenyum_api_doc.render_docs"/>
-            <tag name="console.command" command="elenyum:apidoc:dump"/>
+            <tag name="console.command" command="elenyum:apidoc:dump" alias="e:a:d"/>
         </service>
         <service id="elenyum_api_doc.module.create" class="Elenyum\ApiDocBundle\Command\Maker\Command\CreateModule"
                  public="true">
             <argument type="service" id="filesystem"/>
             <argument type="service" id="App\Kernel"/>
-            <tag name="console.command" command="elenyum:module:create"/>
+            <tag name="console.command" command="elenyum:module:create" alias="e:m:c"/>
         </service>
         <service id="elenyum_api_doc.module.init" class="Elenyum\ApiDocBundle\Command\Maker\Command\InitModule"
                  public="true">
             <argument type="service" id="filesystem"/>
             <argument type="service" id="App\Kernel"/>
-            <tag name="console.command" command="elenyum:module:init"/>
+            <tag name="console.command" command="elenyum:module:init" alias="e:m:i"/>
         </service>
 
         <!-- Validator -->

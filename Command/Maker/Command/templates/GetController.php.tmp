@@ -2,11 +2,11 @@
 
 namespace Module\{%uModuleName%}\V1\Controller;
 
-use App\Controller\BaseController;
-use App\Repository\GetItemInterface;
+use Elenyum\ApiDocBundle\Controller\BaseController;
+use Elenyum\ApiDocBundle\Repository\GetItemInterface;
 use Exception;
-use App\Exception\UndefinedEntity;
-use App\Entity\BaseEntity;
+use Elenyum\ApiDocBundle\Exception\UndefinedEntity;
+use Elenyum\ApiDocBundle\Entity\BaseEntity;
 use Module\{%uModuleName%}\V1\Entity\{%entityName%};
 use Module\{%uModuleName%}\V1\Service\{%entityName%}Service;
 use Elenyum\ApiDocBundle\Annotation\Model;

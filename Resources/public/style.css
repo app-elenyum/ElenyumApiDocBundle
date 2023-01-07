@@ -21,7 +21,7 @@ body {
 
 header:before {
   content:"";
-  background-color:#27848E;
+  background-color:#dedede;
   height:70px;
   width:100%;
   text-align:center;
@@ -41,7 +41,6 @@ header #logo {
 
 header #logo img {
   height:48px;
-  background-color:rgba(40, 134, 144, 0.4)
 }
 
 /**  INCREASE WRAPPER BLOC PADDING **/

@@ -2,11 +2,11 @@
 
 namespace Module\{%uModuleName%}\V1\Controller;
 
-use App\Entity\BaseEntity;
-use App\Controller\BaseController;
-use App\Repository\GetItemForDeleteInterface;
+use Elenyum\ApiDocBundle\Entity\BaseEntity;
+use Elenyum\ApiDocBundle\Controller\BaseController;
+use Elenyum\ApiDocBundle\Repository\GetItemForDeleteInterface;
 use Exception;
-use App\Exception\UndefinedEntity;
+use Elenyum\ApiDocBundle\Exception\UndefinedEntity;
 use Elenyum\ApiDocBundle\Annotation\Model;
 use Module\{%uModuleName%}\V1\Entity\{%entityName%};
 use Module\{%uModuleName%}\V1\Service\{%entityName%}Service;

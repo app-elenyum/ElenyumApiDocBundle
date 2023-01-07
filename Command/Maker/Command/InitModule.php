@@ -106,10 +106,10 @@ class InitModule extends Command
         unset($value['doctrine']['orm']['naming_strategy']);
         unset($value['doctrine']['orm']['auto_mapping']);
         unset($value['doctrine']['orm']['mappings']);
-        $value['doctrine']['dbal']['connections']['user']['url'] = '%env(resolve:DATABASE_URL)%';
+        $value['doctrine']['dbal']['connections']['default']['url'] = '%env(resolve:DATABASE_URL)%';
         $value['doctrine']['orm']['default_entity_manager'] = 'user';
         $value['doctrine']['orm']['entity_managers']['user'] = [
-            'connection' => 'user',
+            'connection' => 'default',
             'mappings' => [
                 'User' => [
                     'is_bundle' => false,

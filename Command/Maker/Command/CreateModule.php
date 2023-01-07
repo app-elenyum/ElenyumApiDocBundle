@@ -127,7 +127,7 @@ class CreateModule extends Command
         $value = $config->parse();
         $value['doctrine']['dbal']['connections'][lcfirst($moduleName)]['url'] = "%env(resolve:DATABASE_URL)%";
         $value['doctrine']['orm']['entity_managers'][lcfirst($moduleName)] = [
-            "connection" => lcfirst($moduleName),
+            "connection" => 'default',
             "mappings" => [
                 ucfirst($moduleName) => [
                     "is_bundle" => false,

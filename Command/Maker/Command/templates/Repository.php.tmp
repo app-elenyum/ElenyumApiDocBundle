@@ -4,7 +4,7 @@ namespace Module\{%uModuleName%}\V1\Repository;
 
 use Module\{%uModuleName%}\V1\Entity\{%entityName%};
 use Doctrine\Persistence\ManagerRegistry;
-use App\Repository\BaseRepository;
+use Elenyum\ApiDocBundle\Repository\BaseRepository;
 
 /**
  * Class {%repositoryName%}

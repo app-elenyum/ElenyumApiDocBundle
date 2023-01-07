@@ -2,9 +2,9 @@
 
 namespace Module\{%uModuleName%}\V1\Controller;
 
-use App\Controller\BaseController;
-use App\Doc\ContentPagination;
-use App\Repository\PaginatorInterface;
+use Elenyum\ApiDocBundle\Controller\BaseController;
+use Elenyum\ApiDocBundle\Annotation\PaginatorAnnotation;
+use Elenyum\ApiDocBundle\Repository\PaginatorInterface;
 use Exception;
 use Module\{%uModuleName%}\V1\Entity\{%entityName%};
 use Module\{%uModuleName%}\V1\Service\{%entityName%}Service;
@@ -24,7 +24,7 @@ use Symfony\Component\Routing\Annotation\Route;
             new OA\Property(property: 'code', type: 'integer'),
             new OA\Property(
                 property: 'paginator',
-                ref: new Model(type: ContentPagination::class)
+                ref: new Model(type: PaginatorAnnotation::class)
             ),
             new OA\Property(
                 property: 'items',
