@@ -9,7 +9,7 @@ for your APIs.
 Open a command console, enter your project directory and execute the following command to download the latest version of this bundle:
 
 ```
-composer require elenyum-app/api-doc-bundle
+composer require elenyum/api-doc-bundle
 ```
 
 ## Documentation
