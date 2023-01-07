@@ -1,6 +1,6 @@
 {
     "name": "elenyum/api-doc-bundle",
-    "version": "1.0",
+    "version": "0.1.0",
     "description": "Generates elenyum structure for your REST API and documentation from annotations",
     "keywords": ["api", "documentation", "doc", "rest"],
     "type": "symfony-bundle",
