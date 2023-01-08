@@ -73,7 +73,7 @@ class CreateModule extends Command
         );
 
         $this->copyTemplateToModule(
-            'README.md', 'README.md', '/',
+            'README.md', 'README.md', $dir.'/'.$moduleName,
             ['{%lModuleName%}'],
             [lcfirst($moduleName)]
         );

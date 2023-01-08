@@ -3,12 +3,7 @@
 namespace Module\User\V1\Service;
 
 use Elenyum\ApiDocBundle\Service\BaseService;
-use Elenyum\ApiDocBundle\Validator\ValidInterface;
-use Doctrine\Persistence\ManagerRegistry;
 use Module\User\V1\Entity\User;
-use Psr\Log\LoggerInterface;
-use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 

@@ -14,11 +14,7 @@ body {
   padding: 0;
 }
 
-
-
-
 /** HEADER **/
-
 header:before {
   content:"";
   background-color:#dedede;
@@ -44,14 +40,11 @@ header #logo img {
 }
 
 /**  INCREASE WRAPPER BLOC PADDING **/
-
 #swagger-ui.api-platform .wrapper {
   padding:0px 60px;
 }
 
-
 /**  INFORMATIONS BLOC **/
-
 #swagger-ui.api-platform .information-container.wrapper {
   margin:0;
   padding:20px 0 5px;
@@ -76,19 +69,19 @@ header #logo img {
 /**  METHODS BLOCS **/
 
 #swagger-ui.api-platform .opblock.opblock-get .opblock-summary-method {
-  background-color:#3CAAB5;
+  background-color: #b0f3fc;
 }
 
 #swagger-ui.api-platform .opblock.opblock-put .opblock-summary-method {
-  background-color:#E6C229;
+  background-color:#fff2ba;
 }
 
 #swagger-ui.api-platform .opblock.opblock-post .opblock-summary-method {
-  background-color:#78BC61;
+  background-color: #c7fab8;
 }
 
 #swagger-ui.api-platform .opblock.opblock-delete .opblock-summary-method {
-  background-color:#ED6A5A;
+  background-color: #ffc4bc;
 }
 
 #swagger-ui.api-platform .opblock.opblock-deprecated .opblock-summary-method {
@@ -96,19 +89,19 @@ header #logo img {
 }
 
 #swagger-ui.api-platform .opblock.opblock-get .opblock-summary {
-  border-color:#3CAAB5;
+  border-color: #b6faff;
 }
 
 #swagger-ui.api-platform .opblock.opblock-put .opblock-summary {
-  border-color:#E6C229;
+  border-color: #fff5c8;
 }
 
 #swagger-ui.api-platform .opblock.opblock-post .opblock-summary {
-  border-color:#78BC61;
+  border-color: #bcffa8;
 }
 
 #swagger-ui.api-platform .opblock.opblock-delete .opblock-summary {
-  border-color:#ED6A5A;
+  border-color: #ffcfc8;
 }
 
 #swagger-ui.api-platform .opblock.opblock-deprecated .opblock-summary {
