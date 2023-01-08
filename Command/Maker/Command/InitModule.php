@@ -40,6 +40,7 @@ class InitModule extends Command
         $this->addComposerConfig();
         $this->addDoctrineConfigure();
         $this->addResetPasswordConfigure();
+        $this->configureSecurity();
 
         $this->filesystem->copy(__DIR__.'/templates/config/elenyum_api_doc.yaml', $dir.'/config/packages/elenyum_api_doc.yaml');
         $this->filesystem->copy(__DIR__.'/templates/config/routes/elenyum_api_doc.yaml', $dir.'/config/routes/elenyum_api_doc.yaml');
@@ -167,6 +168,30 @@ class InitModule extends Command
 
         $value['module']['type'] = 'attribute';
         $value['module']['resource'] = '../module/';
+        $config->save($value);
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function configureSecurity()
+    {
+        $configDir = $this->kernel->getProjectDir().'/config/packages/security.yaml';
+        if (!$this->filesystem->exists($configDir)) {
+            throw new Exception(
+                'No`t found config/packages/security.yaml'
+            );
+        }
+        $config = new ConfigEditor($configDir);
+        $value = $config->parse();
+
+        unset($value['security']['providers']['users_in_memory']);
+        unset($value['security']['firewalls']['main']['provider']);
+
+        $value['security']['providers']['app_user_provider']['entity']['class'] = 'Module\User\V1\Entity\User';
+        $value['security']['firewalls']['main']['json_login']['check_path'] = 'userLogin';
+        $value['security']['firewalls']['main']['logout']['target'] = 'userLogin';
+
         $config->save($value);
     }
 }

@@ -1,4 +1,4 @@
 ### Создать БД
-#### php bin/console d:d:c -c {%lModuleName%}
+#### php bin/console d:d:c -c default
 ### Добавить таблицу:
 #### php bin/console d:s:u -f --em={%lModuleName%}

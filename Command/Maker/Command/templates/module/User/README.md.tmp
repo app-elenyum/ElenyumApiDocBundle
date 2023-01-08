@@ -1,4 +1,4 @@
-Создать БД
-se  d:d:c -c user
-Добавить таблицу:
-se d:s:u -f --em=user
+### Создать БД
+#### php bin/console  d:d:c -c default
+### Добавить таблицу:
+#### php bin/console d:s:u -f --em=user
