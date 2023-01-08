@@ -33,7 +33,6 @@ class InitModule extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $dir = $this->kernel->getProjectDir();
-        $moduleDir = $dir.'/module/User';
 
         $this->configureServices();
         $this->configureRoutes();
@@ -152,6 +151,7 @@ class InitModule extends Command
         $value = $config->parse();
 
         $value['services']['Module\\']['resource'] = '../module/';
+        $value['services']['App\\EventListener\\ExceptionListener']['tags'] = [['name' => 'kernel.event_listener', 'event' => 'kernel.exception']];
         $config->save($value);
     }
 
@@ -189,6 +189,7 @@ class InitModule extends Command
         unset($value['security']['firewalls']['main']['provider']);
 
         $value['security']['providers']['app_user_provider']['entity']['class'] = 'Module\User\V1\Entity\User';
+        $value['security']['providers']['app_user_provider']['entity']['property'] = 'email';
         $value['security']['firewalls']['main']['json_login']['check_path'] = 'userLogin';
         $value['security']['firewalls']['main']['logout']['target'] = 'userLogout';
 

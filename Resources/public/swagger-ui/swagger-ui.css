@@ -10880,7 +10880,7 @@
 }
 
 .swagger-ui .info hgroup.main {
-    margin: 0 0 20px
+    margin: 85px 0 0 0;
 }
 
 .swagger-ui .info hgroup.main a {

@@ -56,7 +56,9 @@ header #logo img {
 }
 
 #swagger-ui.api-platform .info .title {
-  color:#3caab5;
+  color: #636363;
+  font-weight: 300;
+  font-style: italic;
 }
 
 #swagger-ui.api-platform .info {

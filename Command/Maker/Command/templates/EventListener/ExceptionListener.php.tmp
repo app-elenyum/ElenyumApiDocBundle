@@ -1,6 +1,6 @@
 <?php
 
-namespace Elenyum\ApiDocBundle\EventListener;
+namespace App\EventListener;
 
 use Elenyum\ApiDocBundle\Validator\ValidationException;
 use Symfony\Component\HttpFoundation\JsonResponse;

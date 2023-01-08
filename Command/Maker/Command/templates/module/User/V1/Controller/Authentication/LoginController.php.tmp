@@ -93,6 +93,17 @@ class LoginController extends BaseController
             $item['session'] = $service->getSessionId();
             unset($item['salt'], $item['userIdentifier']);
 
+            if (!empty($item['createdAt'])) {
+                $item['createdAt'] = DateTimeImmutable::createFromFormat('U', $item['createdAt']['timestamp'])->format(
+                    DATE_ATOM
+                );
+            }
+            if (!empty($item['updatedAt'])) {
+                $item['updatedAt'] = DateTimeImmutable::createFromFormat('U', $item['updatedAt']['timestamp'])->format(
+                    DATE_ATOM
+                );
+            }
+
             return $this->json([
                 'success' => true,
                 'code' => Response::HTTP_OK,
