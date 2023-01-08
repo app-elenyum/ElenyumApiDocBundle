@@ -190,7 +190,7 @@ class InitModule extends Command
 
         $value['security']['providers']['app_user_provider']['entity']['class'] = 'Module\User\V1\Entity\User';
         $value['security']['firewalls']['main']['json_login']['check_path'] = 'userLogin';
-        $value['security']['firewalls']['main']['logout']['target'] = 'userLogin';
+        $value['security']['firewalls']['main']['logout']['target'] = 'userLogout';
 
         $config->save($value);
     }
