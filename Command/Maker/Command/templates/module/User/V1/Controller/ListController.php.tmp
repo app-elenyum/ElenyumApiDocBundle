@@ -51,6 +51,11 @@ use Symfony\Component\Routing\Annotation\Route;
     schema: new OA\Schema(type: 'integer')
 )]
 #[OA\Parameter(
+    name: 'offset',
+    in: 'query',
+    schema: new OA\Schema(type: 'integer')
+)]
+#[OA\Parameter(
     name: 'field',
     in: 'query',
     schema: new OA\Schema(type: 'string'),
@@ -67,12 +72,6 @@ use Symfony\Component\Routing\Annotation\Route;
     in: 'query',
     schema: new OA\Schema(type: 'string'),
     example: '+id,-name'
-)]
-#[OA\Parameter(
-    name: 'order',
-    description: 'The field used to order rewards',
-    in: 'query',
-    schema: new OA\Schema(type: 'string')
 )]
 #[Security(name: null)]
 #[OA\Tag(name: 'User')]
