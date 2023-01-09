@@ -2,6 +2,7 @@
 
 namespace Module\User\V1\Controller\Authentication;
 
+use DateTimeImmutable;
 use Elenyum\ApiDocBundle\Controller\BaseController;
 use Exception;
 use Module\User\V1\Entity\User;

@@ -10952,7 +10952,7 @@
     color: #fff;
     font-family: sans-serif;
     margin: 0;
-    padding: 0
+    padding: 1px 10px;
 }
 
 .swagger-ui .auth-btn-wrapper {

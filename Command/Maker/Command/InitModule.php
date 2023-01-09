@@ -84,8 +84,8 @@ class InitModule extends Command
     {
         $dir = $this->kernel->getProjectDir();
 
-        $myFile = json_decode(file_get_contents($dir.'/composer.json'), JSON_OBJECT_AS_ARRAY);
-        $myFile['autoload']['psr-4']["Module\\"] = 'module/';
+        $myFile = json_decode(file_get_contents($dir.'/composer.json'));
+        $myFile->autoload->{"psr-4"}->{"Module\\"} = 'module/';
         file_put_contents($dir.'/composer.json', json_encode($myFile, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES));
     }
 
