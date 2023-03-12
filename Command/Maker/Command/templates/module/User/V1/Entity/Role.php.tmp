@@ -1,0 +1,86 @@
+<?php
+
+namespace Module\User\V1\Entity;
+
+use Doctrine\DBAL\Types\Types;
+use Elenyum\ApiDocBundle\Entity\BaseEntity;
+use Module\User\V1\Repository\RoleRepository;
+use Symfony\Component\Serializer\Annotation\Groups;
+use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
+
+#[ORM\Entity(repositoryClass: RoleRepository::class)]
+#[ORM\Table(name: 'roles')]
+class Role extends BaseEntity
+{
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: Types::INTEGER)]
+    #[Groups(['GET', 'DEL_RES', 'PUT_RES', 'POST_RES', 'LIST', 'PUT_REQ', 'POST_REQ'])]
+    private int $id;
+
+    #[ORM\Column(type: Types::STRING, length: 200)]
+    #[Assert\Length(min: 3, max: 200)]
+    #[Assert\NotBlank]
+    #[Groups(['GET', 'DEL_RES', 'PUT_RES', 'POST_RES', 'LIST', 'ROLE_POST_REQ', 'ROLE_PUT_REQ'])]
+    private string $name;
+
+    #[ORM\Column(type: Types::STRING, length: 50)]
+    #[Assert\Length(min: 5, max: 50)]
+    #[Assert\NotBlank]
+    #[Groups(['GET', 'DEL_RES', 'PUT_RES', 'POST_RES', 'LIST', 'ROLE_POST_REQ', 'ROLE_PUT_REQ'])]
+    private string $systemName;
+
+    /**
+     * @return int
+     */
+    public function getId(): int
+    {
+        return $this->id;
+    }
+
+    /**
+     * @param int $id
+     */
+    public function setId(int $id): void
+    {
+        $this->id = $id;
+    }
+
+    /**
+     * @return string
+     */
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    /**
+     * @param string $name
+     */
+    public function setName(string $name): void
+    {
+        $this->name = $name;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSystemName(): string
+    {
+        return $this->systemName;
+    }
+
+    /**
+     * @param string $systemName
+     */
+    public function setSystemName(string $systemName): void
+    {
+        $this->systemName = $systemName;
+    }
+
+    public function __toString(): string
+    {
+        return $this->getSystemName();
+    }
+}

@@ -1,26 +1,27 @@
 <?php
 
-namespace Module\{%uModuleName%}\V1\Controller;
+namespace Module\User\V1\Controller;
 
+use Elenyum\ApiDocBundle\Annotation\Model;
+use Elenyum\ApiDocBundle\Annotation\Security;
 use Elenyum\ApiDocBundle\Controller\BaseController;
+use Elenyum\ApiDocBundle\Entity\BaseEntity;
+use Elenyum\ApiDocBundle\Exception\UndefinedEntity;
+use Elenyum\ApiDocBundle\Repository\GetItemForPutInterface;
 use Elenyum\ApiDocBundle\Validator\ValidationException;
 use Exception;
-use Elenyum\ApiDocBundle\Exception\UndefinedEntity;
-use Elenyum\ApiDocBundle\Entity\BaseEntity;
-use Module\{%uModuleName%}\V1\Entity\{%entityName%};
-use Module\{%uModuleName%}\V1\Service\{%entityName%}Service;
-use Elenyum\ApiDocBundle\Annotation\Model;
+use Module\User\V1\Entity\Role;
+use Module\User\V1\Service\RoleService;
+use OpenApi\Attributes as OA;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use Elenyum\ApiDocBundle\Annotation\Security;
-use OpenApi\Attributes as OA;
 
-//POST - Create a REST API resource
+//Update a REST API resource
 #[OA\RequestBody(
-    description: 'Model {%lModuleName%} for add data',
+    description: 'Model content for update data by id',
     content: new OA\JsonContent(
-        ref: new Model(type: {%entityName%}::class, groups: ['POST_REQ'])
+        ref: new Model(type: Role::class, groups: ['ROLE_PUT_REQ'])
     )
 )]
 #[OA\Response(
@@ -32,7 +33,7 @@ use OpenApi\Attributes as OA;
             new OA\Property(property: 'code', type: 'integer'),
             new OA\Property(
                 property: 'item',
-                ref: new Model(type: {%entityName%}::class, groups: ['POST_RES'])
+                ref: new Model(type: Role::class, groups: ['PUT_RES'])
             ),
         ]
     )
@@ -61,30 +62,32 @@ use OpenApi\Attributes as OA;
     )
 )]
 #[Security(name: null)]
-#[OA\Tag(name: '{%uModuleName%}')]
-#[Route(path: '/v1/{%lModuleName%}/{%lEntityName%}', name: '{%lModuleName%}{%entityName%}Post', methods: Request::METHOD_POST)]
-class {%entityName%}PostController extends BaseController
+#[OA\Tag(name: 'User')]
+#[Route(path: '/v1/user/role/{id<\d+>}', name: 'contentRolePut', methods: Request::METHOD_PUT)]
+class RolePutController extends BaseController
 {
-    /**
-     * @throws Exception
-     */
-    final public function __invoke(Request $request, {%entityName%}Service $service): Response
+    final public function __invoke(int $id, Request $request, RoleService $service): Response
     {
         try {
-            //Check access
-            $this->denyAccessUnlessGranted('IS_AUTHENTICATED');
-
-            $item = $service->toEntity($request->getContent());
-            if (!$item instanceof BaseEntity) {
-               throw new UndefinedEntity({%entityName%}::class . ' or not extend BaseEntity', $id);
+            $repository = $service->getRepository();
+            if (!$repository instanceof GetItemForPutInterface) {
+                throw new Exception('Repository not implements GetItemForPutInterface');
             }
-            $service->getEntityManager()->persist($item);
+            $item = $repository->findOneBy(['id' => $id]);
+            //Check access
+            $this->denyAccessUnlessGranted('PUT', $item);
+
+            if (!$item instanceof BaseEntity) {
+               throw new UndefinedEntity(Role::class . ' or not extend BaseEntity', $id);
+            }
+
+            $service->updateEntity($item, $request->getContent());
             $service->getEntityManager()->flush();
 
             return $this->json([
                 'success' => true,
                 'code' => Response::HTTP_OK,
-                'item' => $item->toArray('POST_RES'),
+                'item' => $item->toArray('PUT_RES'),
             ]);
         } catch (ValidationException $e) {
             return $this->json([
@@ -101,4 +104,5 @@ class {%entityName%}PostController extends BaseController
             ]);
         }
     }
+
 }

@@ -1,0 +1,24 @@
+<?php
+
+namespace Module\{%uModuleName%}\{%version%}\Repository;
+
+use Module\{%uModuleName%}\{%version%}\Entity\{%entityName%};
+use Doctrine\Persistence\ManagerRegistry;
+use Elenyum\ApiDocBundle\Repository\BaseRepository;
+
+/**
+ * Class {%repositoryName%}
+ * @package Module\{%uModuleName%}\{%version%}\Repository
+ *
+ * @method {%entityName%}|null find($id, $lockMode = null, $lockVersion = null)
+ * @method {%entityName%}|null findOneBy(array $criteria, array $orderBy = null)
+ * @method {%entityName%}[]    findAll()
+ * @method {%entityName%}[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ */
+class {%repositoryName%} extends BaseRepository
+{
+    public function __construct(ManagerRegistry $registry)
+    {
+        parent::__construct($registry, {%entityName%}::class);
+    }
+}

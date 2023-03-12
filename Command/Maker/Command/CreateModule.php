@@ -93,9 +93,9 @@ class CreateModule extends Command
                     '{%lModuleName%}',
                     '{%repositoryName%}',
                     '{%entityName%}',
-                    '{%controllerType%}',
+                    '{%lEntityName%}',
                 ],
-                [ucfirst($moduleName), lcfirst($moduleName), $nameRepository, $nameEntity]
+                [ucfirst($moduleName), lcfirst($moduleName), $nameRepository, $nameEntity, lcfirst($nameEntity)]
             );
         }
 

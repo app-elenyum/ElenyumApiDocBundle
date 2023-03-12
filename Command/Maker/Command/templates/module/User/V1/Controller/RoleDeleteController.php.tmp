@@ -1,31 +1,31 @@
 <?php
 
-namespace Module\{%uModuleName%}\V1\Controller;
+namespace Module\User\V1\Controller;
 
-use Elenyum\ApiDocBundle\Entity\BaseEntity;
+use Elenyum\ApiDocBundle\Annotation\Model;
+use Elenyum\ApiDocBundle\Annotation\Security;
 use Elenyum\ApiDocBundle\Controller\BaseController;
+use Elenyum\ApiDocBundle\Entity\BaseEntity;
+use Elenyum\ApiDocBundle\Exception\UndefinedEntity;
 use Elenyum\ApiDocBundle\Repository\GetItemForDeleteInterface;
 use Exception;
-use Elenyum\ApiDocBundle\Exception\UndefinedEntity;
-use Elenyum\ApiDocBundle\Annotation\Model;
-use Module\{%uModuleName%}\V1\Entity\{%entityName%};
-use Module\{%uModuleName%}\V1\Service\{%entityName%}Service;
+use Module\User\V1\Entity\Role;
+use Module\User\V1\Service\RoleService;
+use OpenApi\Attributes as OA;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use Elenyum\ApiDocBundle\Annotation\Security;
-use OpenApi\Attributes as OA;
 
 #[OA\Response(
     response: 200,
-    description: 'Model {%lModuleName%}',
+    description: 'Model content',
     content: new OA\JsonContent(
         properties: [
             new OA\Property(property: 'success', type: 'boolean', default: true),
             new OA\Property(property: 'code', type: 'integer', default: 200),
             new OA\Property(
                 property: 'items',
-                ref: new Model(type: {%entityName%}::class, groups: ['DEL_RES'])
+                ref: new Model(type: Role::class, groups: ['DEL_RES'])
             ),
         ]
     )
@@ -49,16 +49,13 @@ use OpenApi\Attributes as OA;
     example: [1,2,3]
 )]
 #[Security(name: null)]
-#[OA\Tag(name: '{%uModuleName%}', description: 'Delete a REST API resource')]
-#[Route('/v1/{%lModuleName%}/{%lEntityName%}/{id}', name: '{%lModuleName%}{%entityName%}Delete', methods: Request::METHOD_DELETE)]
-class {%entityName%}DeleteController extends BaseController
+#[OA\Tag(name: 'User', description: 'Delete a REST API resource')]
+#[Route('/v1/user/role/{id}', name: 'contentRoleDelete', methods: Request::METHOD_DELETE)]
+class RoleDeleteController extends BaseController
 {
-    final public function __invoke(string $id, {%entityName%}Service $service): Response
+    final public function __invoke(string $id, RoleService $service): Response
     {
         try {
-            //Check access
-            $this->denyAccessUnlessGranted('IS_AUTHENTICATED');
-
             $repository = $service->getRepository();
             if (!$repository instanceof GetItemForDeleteInterface) {
                 throw new Exception('Repository not implements GetItemForDeleteInterface');
@@ -67,15 +64,19 @@ class {%entityName%}DeleteController extends BaseController
 
             $items = $repository->getItemsForDelete($allId);
             if (empty($items)) {
-                throw new UndefinedEntity({%entityName%}::class, $id);
+                throw new UndefinedEntity(Role::class, $id);
             }
+            $entity = $items[0];
+
             $deletedItems = [];
             foreach ($items as $item) {
                 if ($item instanceof BaseEntity) {
+                    //Check access
+                    $this->denyAccessUnlessGranted('DELETE', $item);
                     $deletedItems[] = $item->toArray('DEL_RES');
                     $service->getEntityManager()->remove($item);
                 } else {
-                    throw new UndefinedEntity({%entityName%}::class . ' or not extend BaseEntity');
+                    throw new UndefinedEntity(Role::class . ' or not extend BaseEntity');
                 }
             }
             $service->getEntityManager()->flush();

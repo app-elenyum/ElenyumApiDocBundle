@@ -6,6 +6,7 @@ use DateTimeImmutable;
 use Elenyum\ApiDocBundle\Controller\BaseController;
 use Exception;
 use Module\User\V1\Entity\User;
+use Module\User\V1\Entity\Role;
 use Module\User\V1\Service\UserService;
 use Elenyum\ApiDocBundle\Annotation\Security;
 use OpenApi\Attributes as OA;
@@ -33,7 +34,10 @@ use Symfony\Component\Serializer\Exception\ExceptionInterface;
                     new OA\Property(property: 'address', type: 'string'),
                     new OA\Property(property: 'createdAt', type: 'datetime'),
                     new OA\Property(property: 'updatedAt', type: 'datetime'),
-                    new OA\Property(property: 'roles', type: 'array', items: new OA\Items(type: 'string', example: 'ROLE_USER')),
+                    new OA\Property(
+                        property: 'roles',
+                        ref: new Model(type: Role::class, groups: ['GET'])
+                    ),
                     new OA\Property(property: 'username', type: 'string', example: 'you@email.com'),
                     new OA\Property(property: 'session', type: 'string', example: '2ff1cc75f2311df8f55cb50d6b2bd3e3'),
                 ]

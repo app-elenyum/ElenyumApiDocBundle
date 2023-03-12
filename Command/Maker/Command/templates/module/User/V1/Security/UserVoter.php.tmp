@@ -1,0 +1,47 @@
+<?php
+
+namespace Module\User\V1\Security;
+
+use Elenyum\ApiDocBundle\Annotation\Access;
+use Elenyum\ApiDocBundle\Entity\BaseEntity;
+use Module\User\V1\Entity\User;
+use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
+use Symfony\Component\Security\Core\Authorization\Voter\Voter;
+
+class UserVoter extends Voter
+{
+    protected function supports(string $attribute, mixed $subject): bool
+    {
+        if (!$subject instanceof BaseEntity) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * @param string $attribute - 'GET', 'POST', 'PUT', 'DELETE'
+     * @param mixed $subject - entity extend BaseEntity
+     * @param TokenInterface $token
+     * @return bool
+     */
+    protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token): bool
+    {
+        $user = $token->getUser();
+        if (empty($user)) {
+            return false;
+        }
+        /** @var BaseEntity $entity */
+        $entity = $subject;
+
+        $reflectionAttribute = (new \ReflectionClass($entity))->getAttributes(Access::class)[0] ?? null;
+        if (!$reflectionAttribute instanceof \ReflectionAttribute) {
+            return true;
+        }
+
+        /** @var Access $access */
+        $access = $reflectionAttribute->newInstance();
+
+        return $access->isAllow($user, $attribute, $entity);
+    }
+}

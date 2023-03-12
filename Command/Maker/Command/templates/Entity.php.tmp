@@ -17,11 +17,11 @@ class {%entityName%} extends BaseEntity
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    #[Groups(['get', 'list', 'post', 'put', 'del'])]
+    #[Groups(['GET', 'POST_RES', 'PUT_RES', ''LIST'', 'POST_REQ', 'PUT_REQ', 'DEL_RES'])]
     private int $id;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: false)]
-    #[Groups(['get', 'list'])]
+    #[Groups(['GET', 'POST_RES', 'PUT_RES', ''LIST''])]
     private DateTimeImmutable $createdAt;
 
     public function __construct()

@@ -7,7 +7,6 @@ use Elenyum\ApiDocBundle\Validator\ValidInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use Symfony\Component\Serializer\Serializer;
 
 interface ConfigInterface
 {
@@ -35,9 +34,4 @@ interface ConfigInterface
      * @return LoggerInterface
      */
     public function getLogger(): LoggerInterface;
-
-    /**
-     * @return Serializer
-     */
-    public function getSerializer(): Serializer;
 }

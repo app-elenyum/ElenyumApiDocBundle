@@ -1,0 +1,11 @@
+<?php
+
+namespace Module\User\V1\Service;
+
+use Elenyum\ApiDocBundle\Service\BaseService;
+
+class RoleService extends BaseService
+{
+    protected const DATABASE = 'user';
+    protected const ENTITY = 'Module\User\V1\Entity\Role';
+}

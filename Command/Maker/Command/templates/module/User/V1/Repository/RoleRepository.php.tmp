@@ -1,0 +1,23 @@
+<?php
+
+
+use Doctrine\Persistence\ManagerRegistry;
+use Elenyum\ApiDocBundle\Repository\BaseRepository;
+use Module\User\V1\Entity\Role;
+
+/**
+ * Class RoleRepository
+ * @package Module\User\Repository
+ *
+ * @method Role|null find($id, $lockMode = null, $lockVersion = null)
+ * @method Role|null findOneBy(array $criteria, array $orderBy = null)
+ * @method Role[]    findAll()
+ * @method Role[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ */
+class RoleRepository extends BaseRepository
+{
+    public function __construct(ManagerRegistry $registry)
+    {
+        parent::__construct($registry, Role::class);
+    }
+}

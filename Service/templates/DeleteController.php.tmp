@@ -50,15 +50,12 @@ use OpenApi\Attributes as OA;
 )]
 #[Security(name: null)]
 #[OA\Tag(name: '{%uModuleName%}', description: 'Delete a REST API resource')]
-#[Route('/v1/{%lModuleName%}/{%lEntityName%}/{id}', name: '{%lModuleName%}{%entityName%}Delete', methods: Request::METHOD_DELETE)]
+#[Route('/{%version%}/{%lModuleName%}/{%lEntityName%}/{id}', name: '{%lModuleName%}{%entityName%}Delete', methods: Request::METHOD_DELETE)]
 class {%entityName%}DeleteController extends BaseController
 {
     final public function __invoke(string $id, {%entityName%}Service $service): Response
     {
         try {
-            //Check access
-            $this->denyAccessUnlessGranted('IS_AUTHENTICATED');
-
             $repository = $service->getRepository();
             if (!$repository instanceof GetItemForDeleteInterface) {
                 throw new Exception('Repository not implements GetItemForDeleteInterface');
@@ -69,9 +66,13 @@ class {%entityName%}DeleteController extends BaseController
             if (empty($items)) {
                 throw new UndefinedEntity({%entityName%}::class, $id);
             }
+            $entity = $items[0];
+
             $deletedItems = [];
             foreach ($items as $item) {
                 if ($item instanceof BaseEntity) {
+                    //Check access
+                    $this->denyAccessUnlessGranted('DELETE', $item);
                     $deletedItems[] = $item->toArray('DEL_RES');
                     $service->getEntityManager()->remove($item);
                 } else {

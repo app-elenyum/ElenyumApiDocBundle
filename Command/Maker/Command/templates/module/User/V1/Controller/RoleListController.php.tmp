@@ -2,14 +2,14 @@
 
 namespace Module\User\V1\Controller;
 
-use Elenyum\ApiDocBundle\Controller\BaseController;
+use Elenyum\ApiDocBundle\Annotation\Model;
 use Elenyum\ApiDocBundle\Annotation\PaginatorAnnotation;
+use Elenyum\ApiDocBundle\Annotation\Security;
+use Elenyum\ApiDocBundle\Controller\BaseController;
 use Elenyum\ApiDocBundle\Repository\PaginatorInterface;
 use Exception;
-use Module\User\V1\Entity\User;
-use Module\User\V1\Service\UserService;
-use Elenyum\ApiDocBundle\Annotation\Model;
-use Elenyum\ApiDocBundle\Annotation\Security;
+use Module\User\V1\Entity\Role;
+use Module\User\V1\Service\RoleService;
 use OpenApi\Attributes as OA;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -17,7 +17,7 @@ use Symfony\Component\Routing\Annotation\Route;
 
 #[OA\Response(
     response: 200,
-    description: 'Returns list the model user',
+    description: 'Returns list the model content',
     content: new OA\JsonContent(
         properties: [
             new OA\Property(property: 'success', type: 'boolean'),
@@ -29,7 +29,7 @@ use Symfony\Component\Routing\Annotation\Route;
             new OA\Property(
                 property: 'items',
                 type: 'array',
-                items: new OA\Items(ref: new Model(type: User::class, groups: ["list"]))
+                items: new OA\Items(ref: new Model(type: Role::class, groups: ["LIST"]))
             ),
         ]
     )
@@ -48,12 +48,16 @@ use Symfony\Component\Routing\Annotation\Route;
 #[OA\Parameter(
     name: 'limit',
     in: 'query',
-    schema: new OA\Schema(type: 'integer')
+    required: true,
+    schema: new OA\Schema(type: 'integer'),
+    example: 10,
 )]
 #[OA\Parameter(
     name: 'offset',
     in: 'query',
-    schema: new OA\Schema(type: 'integer')
+    required: true,
+    schema: new OA\Schema(type: 'integer'),
+    example: 0,
 )]
 #[OA\Parameter(
     name: 'field',
@@ -75,14 +79,15 @@ use Symfony\Component\Routing\Annotation\Route;
 )]
 #[Security(name: null)]
 #[OA\Tag(name: 'User')]
-#[Route(path: '/v1/user', name: 'userList', methods: Request::METHOD_GET)]
-class ListController extends BaseController
+#[Route(path: '/v1/user/role', name: 'contentRoleList', methods: Request::METHOD_GET)]
+class RoleListController extends BaseController
 {
-    final public function __invoke(Request $request, UserService $service): Response
+    final public function __invoke(Request $request, RoleService $service): Response
     {
         try {
             //Check access
-            $this->denyAccessUnlessGranted('IS_AUTHENTICATED');
+            $entity = $service->getEntityObject();
+            $this->denyAccessUnlessGranted('GET', $entity);
 
             $repository = $service->getRepository();
             if (!$repository instanceof PaginatorInterface) {

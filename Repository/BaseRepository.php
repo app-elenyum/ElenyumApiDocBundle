@@ -55,7 +55,7 @@ abstract class BaseRepository
     ): Paginator {
         define("ALIAS", 'entity');
 
-        $propertyByGroup = $this->getPropertyByGroup('list');
+        $propertyByGroup = $this->getPropertyByGroup('LIST');
 
         if (!empty($params->getField())) {
             $field = array_intersect($params->getField(), $propertyByGroup);

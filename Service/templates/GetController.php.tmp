@@ -43,28 +43,30 @@ use OpenApi\Attributes as OA;
 )]
 #[Security(name: null)]
 #[OA\Tag(name: '{%uModuleName%}')]
-#[Route(path: '/v1/{%lModuleName%}/{%lEntityName%}/{id<\d+>}', name: '{%lModuleName%}{%entityName%}Get', methods: Request::METHOD_GET)]
+#[Route(path: '/{%version%}/{%lModuleName%}/{%lEntityName%}/{id<\d+>}', name: '{%lModuleName%}{%entityName%}Get', methods: Request::METHOD_GET)]
 class {%entityName%}GetController extends BaseController
 {
     final public function __invoke(int $id, {%entityName%}Service $service): Response
     {
-        try {
-            //Check access
-            $this->denyAccessUnlessGranted('IS_AUTHENTICATED');
+        //Check access
+        $entity = $service->getEntityObject();
+        $this->denyAccessUnlessGranted('GET', $entity);
 
+        try {
             $repository = $service->getRepository();
             if (!$repository instanceof GetItemInterface) {
                 throw new Exception('Repository not implements GetItemInterface');
             }
-            $item = $repository->getItem($id);
-            if (!$item instanceof BaseEntity) {
+            $entity = $repository->getItem($id);
+
+            if (!$entity instanceof BaseEntity) {
                throw new UndefinedEntity({%entityName%}::class . ' or not extend BaseEntity', $id);
             }
 
             return $this->json([
                 'success' => true,
                 'code' => Response::HTTP_OK,
-                'item' => $item->toArray('GET'),
+                'item' => $entity->toArray('GET'),
             ]);
         } catch (Exception $e) {
             return $this->json([

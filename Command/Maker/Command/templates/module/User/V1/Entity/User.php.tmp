@@ -2,6 +2,9 @@
 
 namespace Module\User\V1\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
+use Elenyum\ApiDocBundle\Entity\AllowInterface;
 use Elenyum\ApiDocBundle\Entity\BaseEntity;
 use DateTimeImmutable;
 use Doctrine\DBAL\Types\Types;
@@ -21,7 +24,7 @@ use OpenApi\Attributes as OA;
     message: 'Is already in use on that email.',
     errorPath: 'email'
 )]
-class User extends BaseEntity implements PasswordAuthenticatedUserInterface, UserInterface
+class User extends BaseEntity implements PasswordAuthenticatedUserInterface, UserInterface, AllowInterface
 {
     public const STATUS_NEW = 10;
     public const STATUS_CONFIRMED = 20;
@@ -30,55 +33,63 @@ class User extends BaseEntity implements PasswordAuthenticatedUserInterface, Use
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER)]
-    #[Groups(['list', 'login', 'put', 'get', 'del'])]
+    #[Groups(['LIST', 'PUT_REQ', 'GET', 'PUT_RES', 'POST_RES', 'DEL_RES'])]
     private int $id;
 
     #[ORM\Column(type: Types::STRING, length: 200)]
     #[Assert\Length(min: 3, max: 200)]
     #[Assert\NotBlank]
-    #[Groups(['get', 'list', 'post', 'put', 'login'])]
+    #[Groups(['GET', 'PUT_RES', 'POST_RES', 'LIST', 'POST_REQ', 'PUT_REQ', 'DEL_RES'])]
     private string $name;
 
     #[ORM\Column(type: Types::STRING, length: 180, unique: true)]
     #[Assert\Length(min: 5, max: 180)]
     #[Assert\NotBlank]
     #[Assert\Email]
-    #[Groups(['get', 'list', 'post', 'put', 'login'])]
+    #[Groups(['GET', 'PUT_RES', 'POST_RES', 'LIST', 'POST_REQ', 'PUT_REQ', 'DEL_RES'])]
     #[OA\Property(type: 'string', example: 'you@email.com')]
-    private string $email;
+    private ?string $email = null;
 
     #[Assert\NotBlank]
     #[ORM\Column(type: Types::INTEGER, nullable: false)]
     #[Assert\Choice(choices: [self::STATUS_NEW, self::STATUS_CONFIRMED, self::STATUS_BLOCKED])]
-    #[Groups(['get', 'list', 'post', 'put', 'login'])]
+    #[Groups(['GET', 'PUT_RES', 'POST_RES', 'LIST', 'POST_REQ', 'PUT_REQ'])]
     private int $status;
 
     #[Assert\NotBlank]
     #[Assert\Length(min: 5, max: 20)]
     #[ORM\Column(type: Types::STRING, length: 20, unique: true)]
-    #[Groups(['get', 'list', 'post', 'put', 'login'])]
+    #[Groups(['GET', 'PUT_RES', 'POST_RES', 'LIST', 'POST_REQ', 'PUT_REQ'])]
     private string $phone;
 
     #[Assert\NotBlank]
     #[ORM\Column(type: Types::STRING, length: 255)]
-    #[Groups(['post'])]
+    #[Groups(['POST_REQ'])]
     private string $password;
 
     #[Assert\Length(min: 20, max: 255)]
     #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
-    #[Groups(['get', 'post', 'put', 'login'])]
+    #[Groups(['GET', 'PUT_RES', 'POST_RES', 'POST_REQ', 'PUT_REQ'])]
     private string $address;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
-    #[Groups(['get', 'list', 'login'])]
+    #[Groups(['GET', 'PUT_RES', 'POST_RES', 'LIST'])]
     private DateTimeImmutable $createdAt;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
-    #[Groups(['get', 'list', 'login'])]
+    #[Groups(['GET', 'PUT_RES', 'POST_RES', 'LIST'])]
     private ?DateTimeImmutable $updatedAt = null;
+
+    #[ORM\JoinTable(name: 'users_roles')]
+    #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id')]
+    #[ORM\InverseJoinColumn(name: 'role_id', referencedColumnName: 'id', unique: false)]
+    #[ORM\ManyToMany(targetEntity: Role::class, cascade: ['persist'])]
+    #[Groups(['GET', 'PUT_RES', 'POST_RES', 'POST_REQ', 'PUT_REQ'])]
+    private Collection $roles;
 
     public function __construct()
     {
+        $this->roles = new ArrayCollection();
         $this->setStatus(self::STATUS_NEW);
         $this->setCreatedAt(new DateTimeImmutable());
     }
@@ -118,7 +129,7 @@ class User extends BaseEntity implements PasswordAuthenticatedUserInterface, Use
     /**
      * @return string
      */
-    public function getEmail(): string
+    public function getEmail(): ?string
     {
         return $this->email;
     }
@@ -229,7 +240,24 @@ class User extends BaseEntity implements PasswordAuthenticatedUserInterface, Use
 
     public function getRoles(): array
     {
-        return ['ROLE_USER'];
+        $roles = $this->roles;
+
+        return $roles->toArray();
+    }
+
+    /**
+     * @param Role[] $roles
+     * @return void
+     */
+    public function setRoles(array $roles): void
+    {
+        $this->roles->clear();
+        foreach ($roles as $role) {
+            if ($this->roles->contains($role)) {
+                return;
+            }
+            $this->roles->add($role);
+        }
     }
 
     public function getSalt(): string
@@ -242,13 +270,20 @@ class User extends BaseEntity implements PasswordAuthenticatedUserInterface, Use
         // TODO: Implement eraseCredentials() method.
     }
 
-    public function getUsername(): string
+    public function getUserIdentifier(): string
     {
         return $this->getEmail();
     }
 
-    public function getUserIdentifier(): string
+    public function isAllow(UserInterface $user, string $type): bool
     {
-        return $this->getEmail();
+        // Пользователь может менять свои данные
+        // Пользователь со своей записью может делать всё
+        // Если не может удалять то нужно возвращать false если $type = DELETE
+        if ($this->getUserIdentifier() === $user->getUserIdentifier()) {
+            return true;
+        }
+
+        return false;
     }
 }

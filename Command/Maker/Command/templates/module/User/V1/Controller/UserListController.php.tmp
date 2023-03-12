@@ -1,13 +1,13 @@
 <?php
 
-namespace Module\{%uModuleName%}\V1\Controller;
+namespace Module\User\V1\Controller;
 
 use Elenyum\ApiDocBundle\Controller\BaseController;
 use Elenyum\ApiDocBundle\Annotation\PaginatorAnnotation;
 use Elenyum\ApiDocBundle\Repository\PaginatorInterface;
 use Exception;
-use Module\{%uModuleName%}\V1\Entity\{%entityName%};
-use Module\{%uModuleName%}\V1\Service\{%entityName%}Service;
+use Module\User\V1\Entity\User;
+use Module\User\V1\Service\UserService;
 use Elenyum\ApiDocBundle\Annotation\Model;
 use Elenyum\ApiDocBundle\Annotation\Security;
 use OpenApi\Attributes as OA;
@@ -17,7 +17,7 @@ use Symfony\Component\Routing\Annotation\Route;
 
 #[OA\Response(
     response: 200,
-    description: 'Returns list the model {%lModuleName%}',
+    description: 'Returns list the model user',
     content: new OA\JsonContent(
         properties: [
             new OA\Property(property: 'success', type: 'boolean'),
@@ -29,7 +29,7 @@ use Symfony\Component\Routing\Annotation\Route;
             new OA\Property(
                 property: 'items',
                 type: 'array',
-                items: new OA\Items(ref: new Model(type: {%entityName%}::class, groups: ["LIST"]))
+                items: new OA\Items(ref: new Model(type: User::class, groups: ['LIST']))
             ),
         ]
     )
@@ -65,7 +65,7 @@ use Symfony\Component\Routing\Annotation\Route;
     name: 'filter',
     in: 'query',
     schema: new OA\Schema(type: 'string'),
-    example: '{"id": {"<": "36"}, "name": {"=": "algo"}}'
+    example: "{'id': {'<': '36'}, 'name': {'=': 'algo'}}"
 )]
 #[OA\Parameter(
     name: 'sort',
@@ -74,15 +74,16 @@ use Symfony\Component\Routing\Annotation\Route;
     example: '+id,-name'
 )]
 #[Security(name: null)]
-#[OA\Tag(name: '{%uModuleName%}')]
-#[Route(path: '/v1/{%lModuleName%}/{%lEntityName%}', name: '{%lModuleName%}{%entityName%}List', methods: Request::METHOD_GET)]
-class {%entityName%}ListController extends BaseController
+#[OA\Tag(name: 'User')]
+#[Route(path: '/v1/user', name: 'userList', methods: Request::METHOD_GET)]
+class UserListController extends BaseController
 {
-    final public function __invoke(Request $request, {%entityName%}Service $service): Response
+    final public function __invoke(Request $request, UserService $service): Response
     {
         try {
             //Check access
-            $this->denyAccessUnlessGranted('IS_AUTHENTICATED');
+            $entity = $service->getEntityObject();
+            $this->denyAccessUnlessGranted('GET', $entity);
 
             $repository = $service->getRepository();
             if (!$repository instanceof PaginatorInterface) {

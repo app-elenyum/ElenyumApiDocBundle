@@ -16,6 +16,12 @@
             <argument type="service" id="App\Kernel"/>
             <tag name="console.command" command="elenyum:module:create" alias="e:m:c"/>
         </service>
+
+        <service id="Elenyum\ApiDocBundle\Service\CreatorService" class="Elenyum\ApiDocBundle\Service\CreatorService"
+                 public="true">
+            <argument type="service" id="filesystem"/>
+            <argument type="service" id="App\Kernel"/>
+        </service>
         <service id="elenyum_api_doc.module.init" class="Elenyum\ApiDocBundle\Command\Maker\Command\InitModule"
                  public="true">
             <argument type="service" id="filesystem"/>
@@ -41,6 +47,10 @@
         <service id="elenyum_api_doc.controller.swagger_ui" class="Elenyum\ApiDocBundle\Controller\SwaggerUiController"
                  public="true">
             <argument type="service" id="elenyum_api_doc.render_docs"/>
+        </service>
+        <service id="elenyum_api_doc.controller.module_edit" class="Elenyum\ApiDocBundle\Controller\ModuleEditController"
+                 public="true">
+            <argument type="service" id="doctrine"/>
         </service>
 
         <service id="elenyum_api_doc.controller.swagger" alias="elenyum_api_doc.controller.swagger_json" public="true"/>

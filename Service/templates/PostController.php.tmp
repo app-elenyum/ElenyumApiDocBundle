@@ -1,13 +1,14 @@
 <?php
 
-namespace Module\User\V1\Controller;
+namespace Module\{%uModuleName%}\V1\Controller;
 
 use Elenyum\ApiDocBundle\Controller\BaseController;
 use Elenyum\ApiDocBundle\Validator\ValidationException;
 use Exception;
-use Module\User\V1\Entity\User;
-use Module\User\V1\Event\UserBeforePostEvent;
-use Module\User\V1\Service\UserService;
+use Elenyum\ApiDocBundle\Exception\UndefinedEntity;
+use Elenyum\ApiDocBundle\Entity\BaseEntity;
+use Module\{%uModuleName%}\V1\Entity\{%entityName%};
+use Module\{%uModuleName%}\V1\Service\{%entityName%}Service;
 use Elenyum\ApiDocBundle\Annotation\Model;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -17,9 +18,9 @@ use OpenApi\Attributes as OA;
 
 //POST - Create a REST API resource
 #[OA\RequestBody(
-    description: 'Model user for add (registration)',
+    description: 'Model {%lModuleName%} for add data',
     content: new OA\JsonContent(
-        ref: new Model(type: User::class, groups: ["post"])
+        ref: new Model(type: {%entityName%}::class, groups: ['POST_REQ'])
     )
 )]
 #[OA\Response(
@@ -31,7 +32,7 @@ use OpenApi\Attributes as OA;
             new OA\Property(property: 'code', type: 'integer'),
             new OA\Property(
                 property: 'item',
-                ref: new Model(type: User::class, groups: ["get"])
+                ref: new Model(type: {%entityName%}::class, groups: ['POST_RES'])
             ),
         ]
     )
@@ -44,7 +45,7 @@ use OpenApi\Attributes as OA;
             new OA\Property(property: 'success', type: 'boolean', default: false),
             new OA\Property(property: 'code', type: 'integer'),
             new OA\Property(property: 'message', type: 'integer'),
-            new OA\Property(property: 'errors', type: 'array', items: new OA\Items(type: 'string')),
+            new OA\Property(property: 'errors', type: 'array', items: new OA\Items(type: 'string'))
         ]
     )
 )]
@@ -60,36 +61,30 @@ use OpenApi\Attributes as OA;
     )
 )]
 #[Security(name: null)]
-#[OA\Tag(name: 'User')]
-#[Route(path: '/v1/user', name: 'userPost', methods: Request::METHOD_POST)]
-class PostController extends BaseController
+#[OA\Tag(name: '{%uModuleName%}')]
+#[Route(path: '/{%version%}/{%lModuleName%}/{%lEntityName%}', name: '{%lModuleName%}{%entityName%}Post', methods: Request::METHOD_POST)]
+class {%entityName%}PostController extends BaseController
 {
     /**
      * @throws Exception
      */
-    final public function __invoke(
-        Request $request,
-        UserService $service,
-    ): Response {
+    final public function __invoke(Request $request, {%entityName%}Service $service): Response
+    {
         try {
+            //Check access
+            $entity = $service->getEntityObject();
             $item = $service->toEntity($request->getContent());
-            if (!$item instanceof User) {
-                throw new Exception('Repository not implements User');
+            $this->denyAccessUnlessGranted('POST', $item);
+            if (!$item instanceof BaseEntity) {
+               throw new UndefinedEntity({%entityName%}::class . ' or not extend BaseEntity', $id);
             }
-
-            $service->hashPassword($item);
             $service->getEntityManager()->persist($item);
             $service->getEntityManager()->flush();
-
-            /** EVENT START */
-            $eventBeforePost = new UserBeforePostEvent($item);
-            $service->getEventDispatcher()->dispatch($eventBeforePost, UserBeforePostEvent::NAME);
-            /** EVENT END */
 
             return $this->json([
                 'success' => true,
                 'code' => Response::HTTP_OK,
-                'item' => $item->toArray('get'),
+                'item' => $item->toArray('POST_RES'),
             ]);
         } catch (ValidationException $e) {
             return $this->json([

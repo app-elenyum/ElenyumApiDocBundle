@@ -44,21 +44,31 @@ class InitModule extends Command
         $this->filesystem->copy(__DIR__.'/templates/config/elenyum_api_doc.yaml', $dir.'/config/packages/elenyum_api_doc.yaml');
         $this->filesystem->copy(__DIR__.'/templates/config/routes/elenyum_api_doc.yaml', $dir.'/config/routes/elenyum_api_doc.yaml');
 
-        /** Create module User START */
+        /** Create event START */
         $this->filesystem->copy(__DIR__.'/templates/EventListener/ExceptionListener.php.tmp', $dir .'/src/EventListener/ExceptionListener.php');
+        /** Create event END */
+
+        /** Create module User START */
         $this->filesystem->copy(__DIR__.'/templates/module/User/V1/Controller/Authentication/LoginController.php.tmp', $dir .'/module/User/V1/Controller/Authentication/LoginController.php');
         $this->filesystem->copy(__DIR__.'/templates/module/User/V1/Controller/Authentication/LogoutController.php.tmp', $dir .'/module/User/V1/Controller/Authentication/LogoutController.php');
         $this->filesystem->copy(__DIR__.'/templates/module/User/V1/Controller/Authentication/ResetPasswordController.php.tmp', $dir .'/module/User/V1/Controller/Authentication/ResetPasswordController.php');
         $this->filesystem->copy(__DIR__.'/templates/module/User/V1/Controller/Authentication/ResetPasswordGenerateTokenController.php.tmp', $dir .'/module/User/V1/Controller/Authentication/ResetPasswordGenerateTokenController.php');
 
-        $this->filesystem->copy(__DIR__.'/templates/module/User/V1/Controller/DeleteController.php.tmp', $dir .'/module/User/V1/Controller/DeleteController.php');
-        $this->filesystem->copy(__DIR__.'/templates/module/User/V1/Controller/GetController.php.tmp', $dir .'/module/User/V1/Controller/GetController.php');
-        $this->filesystem->copy(__DIR__.'/templates/module/User/V1/Controller/ListController.php.tmp', $dir .'/module/User/V1/Controller/ListController.php');
-        $this->filesystem->copy(__DIR__.'/templates/module/User/V1/Controller/PostController.php.tmp', $dir .'/module/User/V1/Controller/PostController.php');
-        $this->filesystem->copy(__DIR__.'/templates/module/User/V1/Controller/PutController.php.tmp', $dir .'/module/User/V1/Controller/PutController.php');
+        $this->filesystem->copy(__DIR__.'/templates/module/User/V1/Controller/UserDeleteController.php.tmp', $dir .'/module/User/V1/Controller/UserDeleteController.php');
+        $this->filesystem->copy(__DIR__.'/templates/module/User/V1/Controller/UserGetController.php.tmp', $dir .'/module/User/V1/Controller/UserGetController.php');
+        $this->filesystem->copy(__DIR__.'/templates/module/User/V1/Controller/UserListController.php.tmp', $dir .'/module/User/V1/Controller/UserListController.php');
+        $this->filesystem->copy(__DIR__.'/templates/module/User/V1/Controller/UserPostController.php.tmp', $dir .'/module/User/V1/Controller/UserPostController.php');
+        $this->filesystem->copy(__DIR__.'/templates/module/User/V1/Controller/UserPutController.php.tmp', $dir .'/module/User/V1/Controller/UserPutController.php');
+
+        $this->filesystem->copy(__DIR__.'/templates/module/User/V1/Controller/RoleDeleteController.php.tmp', $dir .'/module/User/V1/Controller/RoleDeleteController.php');
+        $this->filesystem->copy(__DIR__.'/templates/module/User/V1/Controller/RoleGetController.php.tmp', $dir .'/module/User/V1/Controller/RoleGetController.php');
+        $this->filesystem->copy(__DIR__.'/templates/module/User/V1/Controller/RoleListController.php.tmp', $dir .'/module/User/V1/Controller/RoleListController.php');
+        $this->filesystem->copy(__DIR__.'/templates/module/User/V1/Controller/RolePostController.php.tmp', $dir .'/module/User/V1/Controller/RolePostController.php');
+        $this->filesystem->copy(__DIR__.'/templates/module/User/V1/Controller/RolePutController.php.tmp', $dir .'/module/User/V1/Controller/RolePutController.php');
 
         $this->filesystem->copy(__DIR__.'/templates/module/User/V1/Entity/ResetPasswordRequest.php.tmp', $dir .'/module/User/V1/Entity/ResetPasswordRequest.php');
         $this->filesystem->copy(__DIR__.'/templates/module/User/V1/Entity/User.php.tmp', $dir .'/module/User/V1/Entity/User.php');
+        $this->filesystem->copy(__DIR__.'/templates/module/User/V1/Entity/Role.php.tmp', $dir .'/module/User/V1/Entity/Role.php');
 
         $this->filesystem->copy(__DIR__.'/templates/module/User/V1/Event/UserBeforePostEvent.php.tmp', $dir .'/module/User/V1/Event/UserBeforePostEvent.php');
         $this->filesystem->copy(__DIR__.'/templates/module/User/V1/Event/UserBeforeResetEvent.php.tmp', $dir .'/module/User/V1/Event/UserBeforeResetEvent.php');
@@ -67,6 +77,9 @@ class InitModule extends Command
         $this->filesystem->copy(__DIR__.'/templates/module/User/V1/Repository/UserRepository.php.tmp', $dir .'/module/User/V1/Repository/UserRepository.php');
 
         $this->filesystem->copy(__DIR__.'/templates/module/User/V1/Service/UserService.php.tmp', $dir .'/module/User/V1/Service/UserService.php');
+        $this->filesystem->copy(__DIR__.'/templates/module/User/V1/Service/RoleService.php.tmp', $dir .'/module/User/V1/Service/RoleService.php');
+
+        $this->filesystem->copy(__DIR__.'/templates/module/User/V1/Security/UserVoter.php.tmp', $dir .'/module/User/V1/Security/UserVoter.php');
 
         $this->filesystem->copy(__DIR__.'/templates/module/User/README.md.tmp', $dir .'/module/User/README.md');
         /** Create module User END */
@@ -74,6 +87,12 @@ class InitModule extends Command
         $process = new Process(['composer', 'dump-autoload']);
         $process->setWorkingDirectory($dir);
         $process->mustRun();
+
+        $process = new Process(['php', 'bin/console', 'd:s:u', '-f', "--em='user'"]);
+        $process->setWorkingDirectory($dir);
+        $process->setTimeout(3600);
+        $process->setIdleTimeout(60);
+        $process->run();
 
         echo $process->getOutput();
 

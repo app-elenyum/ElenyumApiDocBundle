@@ -17,8 +17,6 @@ class Config implements ConfigInterface
     #[Required]
     public LoggerInterface $logger;
 
-    public Serializer $serializer;
-
     #[Required]
     public ManagerRegistry $registry;
 
@@ -30,14 +28,6 @@ class Config implements ConfigInterface
 
     #[Required]
     public EventDispatcherInterface $eventDispatcher;
-
-    public function __construct()
-    {
-        $normalizer = new GetSetMethodNormalizer();
-        $encoder = new JsonEncoder();
-
-        $this->serializer = new Serializer([$normalizer], [$encoder]);
-    }
 
     /**
      * @return ManagerRegistry
@@ -77,13 +67,5 @@ class Config implements ConfigInterface
     public function getLogger(): LoggerInterface
     {
         return $this->logger;
-    }
-
-    /**
-     * @return Serializer
-     */
-    public function getSerializer(): Serializer
-    {
-        return $this->serializer;
     }
 }

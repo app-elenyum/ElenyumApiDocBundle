@@ -1,31 +1,31 @@
 <?php
 
-namespace Module\{%uModuleName%}\V1\Controller;
+namespace Module\User\V1\Controller;
 
+use Elenyum\ApiDocBundle\Annotation\Model;
+use Elenyum\ApiDocBundle\Annotation\Security;
 use Elenyum\ApiDocBundle\Controller\BaseController;
+use Elenyum\ApiDocBundle\Entity\BaseEntity;
+use Elenyum\ApiDocBundle\Exception\UndefinedEntity;
 use Elenyum\ApiDocBundle\Repository\GetItemInterface;
 use Exception;
-use Elenyum\ApiDocBundle\Exception\UndefinedEntity;
-use Elenyum\ApiDocBundle\Entity\BaseEntity;
-use Module\{%uModuleName%}\V1\Entity\{%entityName%};
-use Module\{%uModuleName%}\V1\Service\{%entityName%}Service;
-use Elenyum\ApiDocBundle\Annotation\Model;
+use Module\User\V1\Entity\Role;
+use Module\User\V1\Service\RoleService;
+use OpenApi\Attributes as OA;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use Elenyum\ApiDocBundle\Annotation\Security;
-use OpenApi\Attributes as OA;
 
 #[OA\Response(
     response: 200,
-    description: 'Get item {%lModuleName%} by id',
+    description: 'Get item content by id',
     content: new OA\JsonContent(
         properties: [
             new OA\Property(property: 'success', type: 'boolean', default: true),
             new OA\Property(property: 'code', type: 'integer', default: 200),
             new OA\Property(
                 property: 'item',
-                ref: new Model(type: {%entityName%}::class, groups: ['GET'])
+                ref: new Model(type: Role::class, groups: ['GET'])
             ),
         ]
     )
@@ -42,29 +42,29 @@ use OpenApi\Attributes as OA;
     )
 )]
 #[Security(name: null)]
-#[OA\Tag(name: '{%uModuleName%}')]
-#[Route(path: '/v1/{%lModuleName%}/{%lEntityName%}/{id<\d+>}', name: '{%lModuleName%}{%entityName%}Get', methods: Request::METHOD_GET)]
-class {%entityName%}GetController extends BaseController
+#[OA\Tag(name: 'User')]
+#[Route(path: '/v1/user/role/{id<\d+>}', name: 'contentRoleGet', methods: Request::METHOD_GET)]
+class RoleGetController extends BaseController
 {
-    final public function __invoke(int $id, {%entityName%}Service $service): Response
+    final public function __invoke(int $id, RoleService $service): Response
     {
         try {
-            //Check access
-            $this->denyAccessUnlessGranted('IS_AUTHENTICATED');
-
             $repository = $service->getRepository();
             if (!$repository instanceof GetItemInterface) {
                 throw new Exception('Repository not implements GetItemInterface');
             }
-            $item = $repository->getItem($id);
-            if (!$item instanceof BaseEntity) {
-               throw new UndefinedEntity({%entityName%}::class . ' or not extend BaseEntity', $id);
+            $entity = $repository->getItem($id);
+            //Check access
+            $this->denyAccessUnlessGranted('GET', $entity);
+
+            if (!$entity instanceof BaseEntity) {
+               throw new UndefinedEntity(Role::class . ' or not extend BaseEntity', $id);
             }
 
             return $this->json([
                 'success' => true,
                 'code' => Response::HTTP_OK,
-                'item' => $item->toArray('GET'),
+                'item' => $entity->toArray('GET'),
             ]);
         } catch (Exception $e) {
             return $this->json([

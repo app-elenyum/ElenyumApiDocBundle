@@ -4,7 +4,7 @@ namespace Module\User\V1\Controller;
 
 use Elenyum\ApiDocBundle\Controller\BaseController;
 use Elenyum\ApiDocBundle\Exception\UndefinedEntity;
-use Elenyum\ApiDocBundle\Repository\GetItemForDeleteInterface;
+use Elenyum\ApiDocBundle\Repository\GetItemInterface;
 use Exception;
 use Module\User\V1\Entity\User;
 use Module\User\V1\Service\UserService;
@@ -17,14 +17,14 @@ use OpenApi\Attributes as OA;
 
 #[OA\Response(
     response: 200,
-    description: 'Delete users by id',
+    description: 'Get model user by id',
     content: new OA\JsonContent(
         properties: [
             new OA\Property(property: 'success', type: 'boolean', default: true),
             new OA\Property(property: 'code', type: 'integer', default: 200),
             new OA\Property(
                 property: 'item',
-                ref: new Model(type: User::class, groups: ["del"])
+                ref: new Model(type: User::class, groups: ['GET'])
             ),
         ]
     )
@@ -36,51 +36,33 @@ use OpenApi\Attributes as OA;
         properties: [
             new OA\Property(property: 'success', type: 'boolean', default: false),
             new OA\Property(property: 'code', type: 'integer'),
-            new OA\Property(property: 'message', type: 'integer', example: "Entity not found"),
+            new OA\Property(property: 'message', type: 'integer'),
         ]
     )
 )]
-#[OA\Parameter(
-    name: 'id',
-    description: 'can int or array',
-    in: 'path',
-    schema: new OA\Schema(type: 'object'),
-    example: [1, 2, 3]
-)]
 #[Security(name: null)]
 #[OA\Tag(name: 'User')]
-#[Route('/v1/user/{id}', name: 'userDelete', methods: Request::METHOD_DELETE)]
-class DeleteController extends BaseController
+#[Route(path: '/v1/user/{id<\d+>}', name: 'userGet', methods: Request::METHOD_GET)]
+class UserGetController extends BaseController
 {
-    final public function __invoke(string $id, UserService $service): Response
+    final public function __invoke(int $id, UserService $service): Response
     {
         try {
-            //Check access
-            $this->denyAccessUnlessGranted('IS_AUTHENTICATED');
-
             $repository = $service->getRepository();
-            if (!$repository instanceof GetItemForDeleteInterface) {
-                throw new Exception('Repository not implements GetItemForDeleteInterface');
+            if (!$repository instanceof GetItemInterface) {
+                throw new Exception('Repository not implements GetItemInterface');
             }
-            $allId = explode(',', $id);
-
-            $items = $repository->getItemsForDelete($allId);
-            if (empty($items)) {
+            $item = $repository->getItem($id);
+            //Check access
+            $this->denyAccessUnlessGranted('GET', $item);
+            if (!$item instanceof User) {
                 throw new UndefinedEntity(User::class, $id);
             }
-            $deletedItems = [];
-            foreach ($items as $item) {
-                if ($item instanceof User) {
-                    $deletedItems[] = $item->toArray('del');
-                    $service->getEntityManager()->remove($item);
-                }
-            }
-            $service->getEntityManager()->flush();
 
             return $this->json([
                 'success' => true,
                 'code' => Response::HTTP_OK,
-                'items' => $deletedItems,
+                'item' => $item->toArray('GET'),
             ]);
         } catch (Exception $e) {
             return $this->json([
@@ -90,5 +72,4 @@ class DeleteController extends BaseController
             ]);
         }
     }
-
 }

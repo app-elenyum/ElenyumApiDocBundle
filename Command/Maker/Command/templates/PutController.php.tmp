@@ -21,7 +21,7 @@ use Elenyum\ApiDocBundle\Annotation\Security;
 #[OA\RequestBody(
     description: 'Model {%lModuleName%} for update data by id',
     content: new OA\JsonContent(
-        ref: new Model(type: {%entityName%}::class, groups: ["put"])
+        ref: new Model(type: {%entityName%}::class, groups: ['PUT_REQ'])
     )
 )]
 #[OA\Response(
@@ -33,7 +33,7 @@ use Elenyum\ApiDocBundle\Annotation\Security;
             new OA\Property(property: 'code', type: 'integer'),
             new OA\Property(
                 property: 'item',
-                ref: new Model(type: {%entityName%}::class, groups: ["get"])
+                ref: new Model(type: {%entityName%}::class, groups: ['PUT_RES'])
             ),
         ]
     )
@@ -63,8 +63,8 @@ use Elenyum\ApiDocBundle\Annotation\Security;
 )]
 #[Security(name: null)]
 #[OA\Tag(name: '{%uModuleName%}')]
-#[Route(path: '/v1/{%lModuleName%}/{id<\d+>}', name: '{%lModuleName%}Put', methods: Request::METHOD_PUT)]
-class PutController extends BaseController
+#[Route(path: '/v1/{%lModuleName%}/{%lEntityName%}/{id<\d+>}', name: '{%lModuleName%}{%entityName%}Put', methods: Request::METHOD_PUT)]
+class {%entityName%}PutController extends BaseController
 {
     final public function __invoke(int $id, Request $request, {%entityName%}Service $service): Response
     {
@@ -87,7 +87,7 @@ class PutController extends BaseController
             return $this->json([
                 'success' => true,
                 'code' => Response::HTTP_OK,
-                'item' => $item->toArray('put'),
+                'item' => $item->toArray('PUT_RES'),
             ]);
         } catch (ValidationException $e) {
             return $this->json([

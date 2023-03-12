@@ -3,24 +3,23 @@
 namespace Module\User\V1\Controller;
 
 use Elenyum\ApiDocBundle\Controller\BaseController;
-use Elenyum\ApiDocBundle\Exception\UndefinedEntity;
-use Elenyum\ApiDocBundle\Repository\GetItemForPutInterface;
 use Elenyum\ApiDocBundle\Validator\ValidationException;
 use Exception;
 use Module\User\V1\Entity\User;
+use Module\User\V1\Event\UserBeforePostEvent;
 use Module\User\V1\Service\UserService;
+use Elenyum\ApiDocBundle\Annotation\Model;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use OpenApi\Attributes as OA;
-use Elenyum\ApiDocBundle\Annotation\Model;
 use Elenyum\ApiDocBundle\Annotation\Security;
+use OpenApi\Attributes as OA;
 
-//Update a REST API resource
+//POST - Create a REST API resource
 #[OA\RequestBody(
-    description: 'Model user for update data',
+    description: 'Model user for add (registration)',
     content: new OA\JsonContent(
-        ref: new Model(type: User::class, groups: ["put"])
+        ref: new Model(type: User::class, groups: ['POST_REQ'])
     )
 )]
 #[OA\Response(
@@ -32,7 +31,7 @@ use Elenyum\ApiDocBundle\Annotation\Security;
             new OA\Property(property: 'code', type: 'integer'),
             new OA\Property(
                 property: 'item',
-                ref: new Model(type: User::class, groups: ["put"])
+                ref: new Model(type: User::class, groups: ['POST_RES'])
             ),
         ]
     )
@@ -45,7 +44,7 @@ use Elenyum\ApiDocBundle\Annotation\Security;
             new OA\Property(property: 'success', type: 'boolean', default: false),
             new OA\Property(property: 'code', type: 'integer'),
             new OA\Property(property: 'message', type: 'integer'),
-            new OA\Property(property: 'errors', type: 'array', items: new OA\Items(type: 'string'))
+            new OA\Property(property: 'errors', type: 'array', items: new OA\Items(type: 'string')),
         ]
     )
 )]
@@ -62,32 +61,35 @@ use Elenyum\ApiDocBundle\Annotation\Security;
 )]
 #[Security(name: null)]
 #[OA\Tag(name: 'User')]
-#[Route(path: '/v1/user/{id<\d+>}', name: 'userPut', methods: Request::METHOD_PUT)]
-class PutController extends BaseController
+#[Route(path: '/v1/user', name: 'userPost', methods: Request::METHOD_POST)]
+class UserPostController extends BaseController
 {
-    final public function __invoke(int $id, Request $request, UserService $service): Response
-    {
+    /**
+     * @throws Exception
+     */
+    final public function __invoke(
+        Request $request,
+        UserService $service,
+    ): Response {
         try {
-            //Check access
-            $this->denyAccessUnlessGranted('IS_AUTHENTICATED');
-
-            $repository = $service->getRepository();
-            if (!$repository instanceof GetItemForPutInterface) {
-                throw new Exception('Repository not implements GetItemForPutInterface');
-            }
-            $item = $repository->getItemForPut($id);
+            $item = $service->toEntity($request->getContent());
             if (!$item instanceof User) {
-                throw new UndefinedEntity(User::class, $id);
+                throw new Exception('Repository not implements User');
             }
 
-            $service->updateEntity($item, $request->getContent());
             $service->hashPassword($item);
+            $service->getEntityManager()->persist($item);
             $service->getEntityManager()->flush();
+
+            /** EVENT START */
+            $eventBeforePost = new UserBeforePostEvent($item);
+            $service->getEventDispatcher()->dispatch($eventBeforePost, UserBeforePostEvent::NAME);
+            /** EVENT END */
 
             return $this->json([
                 'success' => true,
                 'code' => Response::HTTP_OK,
-                'item' => $item->toArray('put'),
+                'item' => $item->toArray('POST_RES'),
             ]);
         } catch (ValidationException $e) {
             return $this->json([
@@ -104,5 +106,4 @@ class PutController extends BaseController
             ]);
         }
     }
-
 }

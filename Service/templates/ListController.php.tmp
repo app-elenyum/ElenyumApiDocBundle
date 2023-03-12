@@ -48,12 +48,16 @@ use Symfony\Component\Routing\Annotation\Route;
 #[OA\Parameter(
     name: 'limit',
     in: 'query',
-    schema: new OA\Schema(type: 'integer')
+    required: true,
+    schema: new OA\Schema(type: 'integer'),
+    example: 10,
 )]
 #[OA\Parameter(
     name: 'offset',
     in: 'query',
-    schema: new OA\Schema(type: 'integer')
+    required: true,
+    schema: new OA\Schema(type: 'integer'),
+    example: 0,
 )]
 #[OA\Parameter(
     name: 'field',
@@ -75,14 +79,15 @@ use Symfony\Component\Routing\Annotation\Route;
 )]
 #[Security(name: null)]
 #[OA\Tag(name: '{%uModuleName%}')]
-#[Route(path: '/v1/{%lModuleName%}/{%lEntityName%}', name: '{%lModuleName%}{%entityName%}List', methods: Request::METHOD_GET)]
+#[Route(path: '/{%version%}/{%lModuleName%}/{%lEntityName%}', name: '{%lModuleName%}{%entityName%}List', methods: Request::METHOD_GET)]
 class {%entityName%}ListController extends BaseController
 {
     final public function __invoke(Request $request, {%entityName%}Service $service): Response
     {
         try {
             //Check access
-            $this->denyAccessUnlessGranted('IS_AUTHENTICATED');
+            $entity = $service->getEntityObject();
+            $this->denyAccessUnlessGranted('GET', $entity);
 
             $repository = $service->getRepository();
             if (!$repository instanceof PaginatorInterface) {

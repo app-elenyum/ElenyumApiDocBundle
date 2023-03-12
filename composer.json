@@ -35,7 +35,8 @@
         "doctrine/orm": "^2.13",
         "symfonycasts/reset-password-bundle": "^1.16",
         "symfony/process": "^4.4|^5.2|^6.0",
-        "symfony/security-bundle": "^4.4|^5.2|^6.0"
+        "symfony/security-bundle": "^4.4|^5.2|^6.0",
+        "nette/php-generator": "^4.0"
     },
     "require-dev": {
         "sensio/framework-extra-bundle": "^4.4|^5.2|^6.0",

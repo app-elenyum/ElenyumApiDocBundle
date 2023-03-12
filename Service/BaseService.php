@@ -2,6 +2,8 @@
 
 namespace Elenyum\ApiDocBundle\Service;
 
+use Elenyum\ApiDocBundle\Entity\BaseEntity;
+use Elenyum\ApiDocBundle\Normalizer\ElenyumNormalizer;
 use Elenyum\ApiDocBundle\Validator\Valid;
 use Elenyum\ApiDocBundle\Validator\ValidationException;
 use Elenyum\ApiDocBundle\Validator\ValidInterface;
@@ -13,6 +15,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Contracts\Service\Attribute\Required;
@@ -39,9 +42,20 @@ abstract class BaseService implements BaseServiceInterface
         $this->validator = $config->getValidator();
         $this->eventDispatcher = $config->getEventDispatcher();
         $this->logger = $config->getLogger();
-        $this->serializer = $config->getSerializer();
+
+        /** START serializer */
+        $normalizer = new ElenyumNormalizer();
+        $encoder = new JsonEncoder();
+        $normalizer->setService($this);
+        $this->serializer = new Serializer([$normalizer], [$encoder]);
+        /** END serializer */
 
         return $this;
+    }
+
+    public function setSerializer(Serializer $serializer): void
+    {
+        $this->serializer = $serializer;
     }
 
     public function getConfig(): ConfigInterface
@@ -147,11 +161,16 @@ abstract class BaseService implements BaseServiceInterface
             'json',
             [AbstractNormalizer::OBJECT_TO_POPULATE => $entity]
         );
-        $validator = $this->validator;
+        $validator = $this->getValidator();
         if (!$validator->isValid($entity)) {
             throw new ValidationException(json_encode($validator->getMessages()), Response::HTTP_BAD_REQUEST);
         }
 
         return $entity;
+    }
+
+    public function getEntityObject(): BaseEntity
+    {
+        return new (static::ENTITY);
     }
 }
