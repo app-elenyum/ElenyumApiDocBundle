@@ -123,13 +123,6 @@ class CreatorService
             $process->setTimeout(3600);
             $process->setIdleTimeout(60);
             $process->run();
-
-//            $em = $this->getEntityManager(mb_strtolower($moduleName));
-//            $metadatas = $em->getMetadataFactory()->getAllMetadata();
-//            $schemaTool = new SchemaTool($em);
-//            /** не обнавляет так-как нет конфигурации ещё (на момент запуска нет конфигурации) как вариант запускать через symfony/process */
-//            $sqls[$moduleName][] = $schemaTool->getUpdateSchemaSql($metadatas, true);
-//            $schemaTool->updateSchema($metadatas, true);
         }
 
         return $createdStructure;

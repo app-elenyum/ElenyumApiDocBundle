@@ -8,6 +8,13 @@ app.swagger:
 ## $ composer require twig asset
 #when@dev:
 #    app.swagger_ui:
-#        path: /api/doc
+#        path: /elenyum/doc
 #        methods: GET
 #        defaults: { _controller: elenyum_api_doc.controller.swagger_ui }
+#
+#    app.elenyum.edit:
+#        path: /elenyum/edit
+#        methods:
+#            - GET
+#            - POST
+#        defaults: { _controller: elenyum_api_doc.controller.edit }

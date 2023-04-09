@@ -1,15 +1,6 @@
 <?php
 
-/*
- * This file is part of the ElenyumApiDocBundle package.
- *
- * (c) Elenyum
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
-namespace Elenyum\ApiDocBundle\Controller;
+namespace Elenyum\ApiDocBundle\Service;
 
 use Doctrine\Bundle\DoctrineBundle\Registry;
 use Doctrine\ORM\Mapping\Column;
@@ -17,26 +8,25 @@ use Doctrine\ORM\Mapping\ManyToMany;
 use Doctrine\ORM\Mapping\ManyToOne;
 use Doctrine\ORM\Mapping\OneToMany;
 use Doctrine\ORM\Mapping\OneToOne;
-use Exception;
-use ReflectionClass;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Elenyum\ApiDocBundle\Entity\BaseEntity;
 use Symfony\Component\Serializer\Annotation\Groups;
+use ReflectionClass;
 
-final class ModuleEditController extends AbstractController
+class EditorService
 {
     public function __construct(
         public Registry $registry
     ) {
     }
 
-    public function __invoke(Request $request, $area = 'default')
+    /**
+     * @return array
+     */
+    public function getModules(): array
     {
         $managerNames = $this->registry->getManagerNames();
         $classes = array();
         foreach ($managerNames as $name => $connection) {
-
             $metas = $this->registry->getManager($name)->getMetadataFactory()->getAllMetadata();
             foreach ($metas as $key => $meta) {
 
@@ -112,17 +102,13 @@ final class ModuleEditController extends AbstractController
             }
         }
 
-        try {
-            return $this->json([
-                'modules' => $classes,
-                'types' => $this->getTypes(),
-            ]);
-        } catch (Exception $e) {
-            throw new BadRequestHttpException('Bad request', $e);
-        }
+        return $classes;
     }
 
-    private function getTypes(): array
+    /**
+     * @return array
+     */
+    public function getTypes(): array
     {
         $manyToOne = new ReflectionClass(ManyToOne::class);
         $oneToOne = new ReflectionClass(OneToOne::class);
@@ -146,5 +132,18 @@ final class ModuleEditController extends AbstractController
         }
 
         return array_merge($types, $simpleTypes);
+    }
+
+    public function getGroups(): array
+    {
+        return [
+            BaseEntity::TYPE_GET,
+            BaseEntity::TYPE_LIST,
+            BaseEntity::TYPE_PUT_RES,
+            BaseEntity::TYPE_PUT_REQ,
+            BaseEntity::TYPE_POST_RES,
+            BaseEntity::TYPE_POST_REQ,
+            BaseEntity::TYPE_DEL_RES,
+        ];
     }
 }

@@ -1,5 +1,6 @@
 <?php
 
+namespace Module\User\V1\Repository;
 
 use Doctrine\Persistence\ManagerRegistry;
 use Elenyum\ApiDocBundle\Repository\BaseRepository;

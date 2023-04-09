@@ -15,7 +15,7 @@ use Symfony\Component\Process\Process;
 #[AsCommand(
     name: 'module:init',
     description: 'This command create module user and setting structure project, after init you need reload composer dump-autoload',
-    aliases: ['md:c'],
+    aliases: ['md:i'],
     hidden: false
 )]
 class InitModule extends Command
@@ -75,6 +75,7 @@ class InitModule extends Command
 
         $this->filesystem->copy(__DIR__.'/templates/module/User/V1/Repository/ResetPasswordRequestRepository.php.tmp', $dir .'/module/User/V1/Repository/ResetPasswordRequestRepository.php');
         $this->filesystem->copy(__DIR__.'/templates/module/User/V1/Repository/UserRepository.php.tmp', $dir .'/module/User/V1/Repository/UserRepository.php');
+        $this->filesystem->copy(__DIR__.'/templates/module/User/V1/Repository/RoleRepository.php.tmp', $dir .'/module/User/V1/Repository/RoleRepository.php');
 
         $this->filesystem->copy(__DIR__.'/templates/module/User/V1/Service/UserService.php.tmp', $dir .'/module/User/V1/Service/UserService.php');
         $this->filesystem->copy(__DIR__.'/templates/module/User/V1/Service/RoleService.php.tmp', $dir .'/module/User/V1/Service/RoleService.php');

@@ -16,19 +16,40 @@ class Role extends BaseEntity
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER)]
-    #[Groups(['GET', 'DEL_RES', 'PUT_RES', 'POST_RES', 'LIST', 'PUT_REQ', 'POST_REQ'])]
+    #[Groups([
+        BaseEntity::TYPE_LIST,
+        BaseEntity::TYPE_PUT_RES,
+        BaseEntity::TYPE_PUT_REQ,
+        BaseEntity::TYPE_POST_RES,
+        BaseEntity::TYPE_POST_REQ,
+        BaseEntity::TYPE_DEL_RES,
+    ])]
     private int $id;
 
     #[ORM\Column(type: Types::STRING, length: 200)]
     #[Assert\Length(min: 3, max: 200)]
     #[Assert\NotBlank]
-    #[Groups(['GET', 'DEL_RES', 'PUT_RES', 'POST_RES', 'LIST', 'ROLE_POST_REQ', 'ROLE_PUT_REQ'])]
+    #[Groups([
+        BaseEntity::TYPE_GET,
+        BaseEntity::TYPE_LIST,
+        BaseEntity::TYPE_PUT_RES,
+        BaseEntity::TYPE_PUT_REQ,
+        BaseEntity::TYPE_POST_RES,
+        BaseEntity::TYPE_POST_REQ,
+    ])]
     private string $name;
 
     #[ORM\Column(type: Types::STRING, length: 50)]
     #[Assert\Length(min: 5, max: 50)]
     #[Assert\NotBlank]
-    #[Groups(['GET', 'DEL_RES', 'PUT_RES', 'POST_RES', 'LIST', 'ROLE_POST_REQ', 'ROLE_PUT_REQ'])]
+    #[Groups([
+        BaseEntity::TYPE_GET,
+        BaseEntity::TYPE_LIST,
+        BaseEntity::TYPE_PUT_RES,
+        BaseEntity::TYPE_PUT_REQ,
+        BaseEntity::TYPE_POST_RES,
+        BaseEntity::TYPE_POST_REQ,
+    ])]
     private string $systemName;
 
     /**
