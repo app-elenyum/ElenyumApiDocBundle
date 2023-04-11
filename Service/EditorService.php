@@ -8,9 +8,17 @@ use Doctrine\ORM\Mapping\ManyToMany;
 use Doctrine\ORM\Mapping\ManyToOne;
 use Doctrine\ORM\Mapping\OneToMany;
 use Doctrine\ORM\Mapping\OneToOne;
+use Elenyum\ApiDocBundle\Annotation\Access;
+use Elenyum\ApiDocBundle\Annotation\NotEditable;
 use Elenyum\ApiDocBundle\Entity\BaseEntity;
 use Symfony\Component\Serializer\Annotation\Groups;
 use ReflectionClass;
+use Symfony\Component\Validator\Constraints\Count;
+use Symfony\Component\Validator\Constraints\Email;
+use Symfony\Component\Validator\Constraints\Length;
+use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\Constraints\NotNull;
+use Symfony\Component\Validator\Constraints\Regex;
 
 class EditorService
 {
@@ -29,14 +37,31 @@ class EditorService
         foreach ($managerNames as $name => $connection) {
             $metas = $this->registry->getManager($name)->getMetadataFactory()->getAllMetadata();
             foreach ($metas as $key => $meta) {
-
                 $reflectionClass = $meta->getReflectionClass();
+                if (!empty($reflectionClass->getAttributes(NotEditable::class))) {
+                    continue;
+                }
 
                 $classes[$name]['version'] = explode('\\', $reflectionClass->getName())[2] ?? 'V1';
                 $classes[$name]['name'] = $name;
                 $classes[$name]['entity'][$key]['class'] = $reflectionClass->getShortName();
                 //Тут класс передаём дважды в случае если имя класса изменилось то сможем понять какой класс изменился
                 $classes[$name]['entity'][$key]['oldClassName'] = $reflectionClass->getShortName();
+
+                $access = $reflectionClass->getAttributes(Access::class);
+                if (!empty($access) && !empty($access[0])) {
+                    /** @var Access $accessClass */
+                    $accessClass = $access[0]->newInstance();
+
+                    $classes[$name]['entity'][$key]['roles'] = $accessClass->getRoles();
+                } else {
+                    $classes[$name]['entity'][$key]['roles'] = [
+                        mb_strtoupper(Access::GET) => [],
+                        mb_strtoupper(Access::POST) => [],
+                        mb_strtoupper(Access::PUT) => [],
+                        mb_strtoupper(Access::DELETE) => [],
+                    ];
+                }
 
                 foreach ($reflectionClass->getProperties() as $propertyKey => $property) {
 
@@ -79,20 +104,44 @@ class EditorService
                         $column['type'] = 'ManyToMany';
                     }
 
-                    if (!empty($columnAttribute) && !empty($columnAttribute->getArguments()) && isset($columnAttribute->getArguments()['type'])) {
+                    if (!empty($columnAttribute) && !empty(
+                        $columnAttribute->getArguments()
+                        ) && isset($columnAttribute->getArguments()['type'])) {
                         $column = [
                             'type' => $columnAttribute->getArguments()['type'],
                             'nullable' => $columnAttribute->getArguments()['nullable'] ?? false,
                         ];
                     }
 
+                    $validator = [];
+                    $getAttributesValidator = array_filter(
+                        [
+                            /**
+                             * @todo нужно получать короткое имя для валидатора
+                             */
+                            $property->getAttributes(Length::class)[0] ?? null,
+                            $property->getAttributes(NotNull::class)[0] ?? null,
+                            $property->getAttributes(Regex::class)[0] ?? null,
+                            $property->getAttributes(Count::class)[0] ?? null,
+                            $property->getAttributes(NotBlank::class)[0] ?? null,
+                            $property->getAttributes(Email::class)[0] ?? null,
+                        ]
+                    );
+
+                    /** @var \ReflectionAttribute $item */
+                    foreach ($getAttributesValidator as $item) {
+                        $objectValidator = $item->newInstance();
+                        $nameClass = lcfirst(
+                            str_replace('Symfony\Component\Validator\Constraints\\', '', get_class($objectValidator))
+                        );
+                        $validator[$nameClass] = $item->getArguments();
+                    }
+
                     $classes[$name]['entity'][$key]['properties'][$propertyKey] = [
                         'name' => $property->getName(),
                         'column' => $column,
-                        'group' => is_array($group?->getArguments()[0]) ? implode(
-                            ', ',
-                            $group?->getArguments()[0]
-                        ) : $group?->getArguments()[0],
+                        'group' => $group?->getArguments()[0],
+                        'validator' => $validator,
                     ];
 
                     if (!empty($toMapping)) {

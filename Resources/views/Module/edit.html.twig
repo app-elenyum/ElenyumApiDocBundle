@@ -11,6 +11,7 @@
     {% endblock stylesheets %}
 
     {% block javascripts %}
+        {{ elenyumAsset(assets_mode, 'edit/js/axios.min.js') }}
         {{ elenyumAsset(assets_mode, 'edit/js/vue.global.js') }}
         {{ elenyumAsset(assets_mode, 'edit/js/core.min.js') }}
         {{ elenyumAsset(assets_mode, 'edit/js/slider.min.js') }}
@@ -168,7 +169,9 @@
                         </span>
                         <span class="p-float-label">
                             <p-multiselect id="ad-item-multiselesct-groups" class="ad-item-multiselesct"
-                                           v-model="columnEdit.group" :options="groups" placeholder="Select Groups"
+                                           v-model="columnEdit.group"
+                                           :options="groups"
+                                           placeholder="Select Groups"
                                            display="chip"></p-multiselect>
                             <label for="ad-item-multiselesct-groups">Groups</label>
                         </span>
@@ -290,6 +293,28 @@
                                     </template>
                                 </p-card>
                             </template>
+                            <template v-if="columnEdit.validator && columnEdit.validator.email">
+                                <p-card class="validator-card mb-5">
+                                    <template #title>
+                                        <span class="p-buttonset">
+                                            Email
+                                            <p-button icon="pi pi-trash" @click="onRemoveValidator($event, 'email')"
+                                                      class="p-button p-component p-button-icon-only p-button-rounded p-button-danger p-button-text button-remove-validator"></p-button>
+                                        </span>
+                                    </template>
+                                </p-card>
+                            </template>
+                            <template v-if="columnEdit.validator && columnEdit.validator.notBlank">
+                                <p-card class="validator-card mb-5">
+                                    <template #title>
+                                        <span class="p-buttonset">
+                                            NotBlank
+                                            <p-button icon="pi pi-trash" @click="onRemoveValidator($event, 'notBlank')"
+                                                      class="p-button p-component p-button-icon-only p-button-rounded p-button-danger p-button-text button-remove-validator"></p-button>
+                                        </span>
+                                    </template>
+                                </p-card>
+                            </template>
                         </template>
                     </div>
                     <!--  Если выбрана сущность   -->
@@ -331,6 +356,7 @@
                                                    :options="roles"
                                                    placeholder="Select roles"
                                                    option-label="name"
+                                                   option-value="systemName"
                                                    display="chip"></p-multiselect>
                                     <label for="ad-item-multiselesct-role-get">Roles can access</label>
                                 </span>
@@ -352,6 +378,7 @@
                                                    v-model="entityEdit.roles.POST" :options="roles"
                                                    placeholder="Select roles"
                                                    option-label="name"
+                                                   option-value="systemName"
                                                    display="chip"></p-multiselect>
                                     <label for="ad-item-multiselesct-role-post">Roles can access</label>
                                 </span>
@@ -373,6 +400,7 @@
                                                    v-model="entityEdit.roles.PUT" :options="roles"
                                                    placeholder="Select roles"
                                                    option-label="name"
+                                                   option-value="systemName"
                                                    display="chip"></p-multiselect>
                                     <label for="ad-item-multiselesct-role-put">Roles can access</label>
                                 </span>
@@ -394,6 +422,7 @@
                                                    v-model="entityEdit.roles.DELETE" :options="roles"
                                                    placeholder="Select roles"
                                                    option-label="name"
+                                                   option-value="systemName"
                                                    display="chip"></p-multiselect>
                                     <label for="ad-item-multiselesct-role-delete">Roles can access</label>
                                 </span>
@@ -528,6 +557,11 @@
                 validatorToggle,
             };
         },
+        mounted() {
+            this.getRoles()
+            this.getModules()
+            this.getGroups()
+        },
         methods: {
             onDubleclickColumn(evt, column, entity, module, moduleName, entityPosition, propertyPosition) {
                 //Данные нужны для удаления свойства сущности START
@@ -591,6 +625,27 @@
 
             onSave() {
                 console.log(JSON.stringify(this.modules))
+            },
+
+            async getRoles() {
+                axios
+                    .get('/elenyum/edit?r=get_roles')
+                    .then(response => (this.roles = response.data.roles));
+            },
+            async getGroups() {
+                axios
+                    .get('/elenyum/edit?r=get_groups')
+                    .then(response => (this.groups = response.data.groups));
+            },
+            async getTypes() {
+                axios
+                    .get('/elenyum/edit?r=get_types')
+                    .then(response => (this.roles = response.data.roles));
+            },
+            async getModules() {
+                axios
+                    .get('/elenyum/edit?r=get_modules')
+                    .then(response => (this.modules = Object.assign({}, response.data.modules)));
             }
         },
         computed: {
@@ -668,6 +723,24 @@
                             this.columnEdit.validator['notNull'] = {};
                         }
                     },
+                    {
+                        label: 'Email',
+                        name: 'email',
+                        forTypes: ['string'],
+                        icon: 'pi pi-plus-circle',
+                        command: () => {
+                            this.columnEdit.validator['email'] = {}
+                        }
+                    },
+                    {
+                        label: 'NotBlank',
+                        name: 'notBlank',
+                        forTypes: ['string'],
+                        icon: 'pi pi-plus-circle',
+                        command: () => {
+                            this.columnEdit.validator['notBlank'] = {}
+                        }
+                    },
                 ];
 
                 let items = allItems.filter((item) => (item.forTypes.length === 0 || item.forTypes.includes(this.columnEdit.column.type)) && !this.columnEdit.validator[item.name]);
@@ -684,16 +757,16 @@
             return {
                 inputRole: null,
                 roles: [
-                    {
-                        id: 1,
-                        name: 'Администратор',
-                        systemName: 'ROLE_ADMIN'
-                    },
-                    {
-                        id: 2,
-                        name: 'Менеджер',
-                        systemName: 'ROLE_MANAGER'
-                    },
+                    // {
+                    //     id: 1,
+                    //     name: 'Администратор',
+                    //     systemName: 'ROLE_ADMIN'
+                    // },
+                    // {
+                    //     id: 2,
+                    //     name: 'Менеджер',
+                    //     systemName: 'ROLE_MANAGER'
+                    // },
                 ],
                 showRoleDialog: false,
                 moduleItems: [
@@ -796,6 +869,8 @@
 
                                     this.moduleEdit = this.modules[moduleName];
                                     this.selected = 'module';
+
+                                    debugger;
                                 }
                             },
                             {
@@ -821,6 +896,7 @@
                                 label: 'Edit',
                                 icon: 'pi pi-pencil',
                                 command: (e) => {
+                                    debugger;
                                     let moduleName = localStorage.moduleName;
                                     let entityPosition = localStorage.entityPosition;
 
@@ -868,136 +944,136 @@
                 selected: '',
                 result: {},
                 modules: {
-                    "Content": {
-                        "name": "Content",
-                        "version": "V1",
-                        "entity": [
-                            {
-                                "class": "News",
-                                "oldClassName": null,
-                                "roles": {
-                                    "GET": [],
-                                    "POST": [],
-                                    "PUT": [],
-                                    "DELETE": []
-                                },
-                                "properties": [
-                                    {
-                                        "name": "id",
-                                        "column": {
-                                            "type": "id",
-                                            "nullable": false
-                                        },
-                                        "group": [
-                                            "GET",
-                                            "LIST",
-                                            "POST_RES",
-                                            "POST_REQ",
-                                            "PUT_RES",
-                                            "PUT_REQ",
-                                            "DEL_RES"
-                                        ],
-                                        "validator": {
-                                            "notNull": {}
-                                        }
-                                    },
-                                    {
-                                        "name": "title",
-                                        "column": {
-                                            "type": "string",
-                                            "nullable": true
-                                        },
-                                        "group": [
-                                            "GET",
-                                            "LIST",
-                                            "POST_RES",
-                                            "POST_REQ",
-                                            "PUT_RES",
-                                            "PUT_REQ",
-                                            "DEL_RES"
-                                        ],
-                                        "validator": {}
-                                    },
-                                    {
-                                        "name": "desc",
-                                        "column": {
-                                            "type": "text",
-                                            "nullable": true
-                                        },
-                                        "group": [
-                                            "GET",
-                                            "LIST",
-                                            "POST_RES",
-                                            "POST_REQ",
-                                            "PUT_RES",
-                                            "PUT_REQ",
-                                            "DEL_RES"
-                                        ],
-                                        "validator": {}
-                                    },
-                                    {
-                                        "name": "category",
-                                        "column": {
-                                            "type": "ManyToOne",
-                                            "nullable": true,
-                                            "targetEntity": "Category"
-                                        },
-                                        "group": [
-                                            "GET",
-                                            "LIST",
-                                            "POST_RES",
-                                            "POST_REQ",
-                                            "PUT_RES",
-                                            "PUT_REQ",
-                                            "DEL_RES"
-                                        ],
-                                        "validator": {}
-                                    }
-                                ]
-                            },
-                            {
-                                "class": "Category",
-                                "roles": {
-                                    "GET": [],
-                                    "POST": [],
-                                    "PUT": [],
-                                    "DELETE": []
-                                },
-                                "properties": [
-                                    {
-                                        "name": "id",
-                                        "column": {
-                                            "type": "id",
-                                            "nullable": false
-                                        },
-                                        "group": [
-                                            "POST_RES",
-                                            "GET",
-                                            "LIST"
-                                        ],
-                                        "validator": {}
-                                    },
-                                    {
-                                        "name": "name",
-                                        "column": {
-                                            "type": "string",
-                                            "nullable": true
-                                        },
-                                        "group": [
-                                            "GET",
-                                            "LIST",
-                                            "POST_RES",
-                                            "POST_REQ",
-                                            "PUT_RES",
-                                            "PUT_REQ",
-                                            "DEL_RES"
-                                        ],
-                                        "validator": {}
-                                    }
-                                ]
-                            }
-                        ]
-                    }
+                    // "Content": {
+                    //     "name": "Content",
+                    //     "version": "V1",
+                    //     "entity": [
+                    //         {
+                    //             "class": "News",
+                    //             "oldClassName": null,
+                    //             "roles": {
+                    //                 "GET": [],
+                    //                 "POST": [],
+                    //                 "PUT": [],
+                    //                 "DELETE": []
+                    //             },
+                    //             "properties": [
+                    //                 {
+                    //                     "name": "id",
+                    //                     "column": {
+                    //                         "type": "id",
+                    //                         "nullable": false
+                    //                     },
+                    //                     "group": [
+                    //                         "GET",
+                    //                         "LIST",
+                    //                         "POST_RES",
+                    //                         "POST_REQ",
+                    //                         "PUT_RES",
+                    //                         "PUT_REQ",
+                    //                         "DEL_RES"
+                    //                     ],
+                    //                     "validator": {
+                    //                         "NotNull": {}
+                    //                     }
+                    //                 },
+                    //                 {
+                    //                     "name": "title",
+                    //                     "column": {
+                    //                         "type": "string",
+                    //                         "nullable": true
+                    //                     },
+                    //                     "group": [
+                    //                         "GET",
+                    //                         "LIST",
+                    //                         "POST_RES",
+                    //                         "POST_REQ",
+                    //                         "PUT_RES",
+                    //                         "PUT_REQ",
+                    //                         "DEL_RES"
+                    //                     ],
+                    //                     "validator": {}
+                    //                 },
+                    //                 {
+                    //                     "name": "desc",
+                    //                     "column": {
+                    //                         "type": "text",
+                    //                         "nullable": true
+                    //                     },
+                    //                     "group": [
+                    //                         "GET",
+                    //                         "LIST",
+                    //                         "POST_RES",
+                    //                         "POST_REQ",
+                    //                         "PUT_RES",
+                    //                         "PUT_REQ",
+                    //                         "DEL_RES"
+                    //                     ],
+                    //                     "validator": {}
+                    //                 },
+                    //                 {
+                    //                     "name": "category",
+                    //                     "column": {
+                    //                         "type": "ManyToOne",
+                    //                         "nullable": true,
+                    //                         "targetEntity": "Category"
+                    //                     },
+                    //                     "group": [
+                    //                         "GET",
+                    //                         "LIST",
+                    //                         "POST_RES",
+                    //                         "POST_REQ",
+                    //                         "PUT_RES",
+                    //                         "PUT_REQ",
+                    //                         "DEL_RES"
+                    //                     ],
+                    //                     "validator": {}
+                    //                 }
+                    //             ]
+                    //         },
+                    //         {
+                    //             "class": "Category",
+                    //             "roles": {
+                    //                 "GET": [],
+                    //                 "POST": [],
+                    //                 "PUT": [],
+                    //                 "DELETE": []
+                    //             },
+                    //             "properties": [
+                    //                 {
+                    //                     "name": "id",
+                    //                     "column": {
+                    //                         "type": "id",
+                    //                         "nullable": false
+                    //                     },
+                    //                     "group": [
+                    //                         "POST_RES",
+                    //                         "GET",
+                    //                         "LIST"
+                    //                     ],
+                    //                     "validator": {}
+                    //                 },
+                    //                 {
+                    //                     "name": "name",
+                    //                     "column": {
+                    //                         "type": "string",
+                    //                         "nullable": true
+                    //                     },
+                    //                     "group": [
+                    //                         "GET",
+                    //                         "LIST",
+                    //                         "POST_RES",
+                    //                         "POST_REQ",
+                    //                         "PUT_RES",
+                    //                         "PUT_REQ",
+                    //                         "DEL_RES"
+                    //                     ],
+                    //                     "validator": {}
+                    //                 }
+                    //             ]
+                    //         }
+                    //     ]
+                    // }
                 },
                 groups: [
                     'GET',

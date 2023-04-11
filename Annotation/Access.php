@@ -27,11 +27,20 @@ final class Access
     public const DELETE = 'delete';
 
     public function __construct(
-        private readonly array $get,
-        private readonly array $post,
-        private readonly array $put,
-        private readonly array $delete,
-    ) {
+        private readonly array $get = [],
+        private readonly array $post = [],
+        private readonly array $put = [],
+        private readonly array $delete = [],
+    ) {}
+
+    public function getRoles(): array
+    {
+        return [
+            mb_strtoupper(self::GET) => $this->get,
+            mb_strtoupper(self::POST) => $this->post,
+            mb_strtoupper(self::PUT) => $this->put,
+            mb_strtoupper(self::DELETE) => $this->delete,
+        ];
     }
 
     /**
