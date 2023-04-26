@@ -22,6 +22,8 @@ use Symfony\Component\Validator\Constraints\Regex;
 
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Tools\SchemaTool;
+use Symfony\Component\Yaml\Parser;
+use Symfony\Component\Yaml\Yaml;
 
 class CreatorService
 {
@@ -35,25 +37,50 @@ class CreatorService
     ) {
     }
 
+    /**
+     * @throws Exception
+     */
     public function create(array $data): array
     {
-        $modulePath = $this->kernel->getProjectDir().'/module';
+        $modulePath = $this->getProjectDir().'/module';
 
         //Возвращаем созданные файлы
         $createdStructure = [];
 
-        foreach ($data as $moduleData) {
+        //Если есть сущности для обновления то обновляем иначе пропускаем
+        $updateEntity = 0;
+
+        foreach ($data as $oldModuleName => $moduleData) {
             $version = ucfirst($moduleData['version']);
+            if ($oldModuleName !== $moduleData['name']) {
+                $this->filesystem->rename(
+                    $modulePath.'/'.ucfirst($oldModuleName),
+                    $modulePath.'/'.ucfirst($moduleData['name'])
+                );
+                $this->deleteDoctrineConfigure($oldModuleName);
+            }
             $moduleName = $moduleData['name'];
             $fullPath = $modulePath.'/'.ucfirst($moduleName).'/'.$version;
             $moduleNamespace = 'Module\\'.ucfirst($moduleName).'\\'.$version;
 
             foreach ($moduleData['entity'] as $entity) {
+                if (isset($entity['hash'])) {
+                    $hash = $entity['hash'];
+                    unset($entity['hash']);
+                    if ($hash === sha1(serialize($entity))) {
+                        continue;
+                    }
+                }
+                $updateEntity++;
                 $entityClass = $this->createEntityClass($entity, $moduleNamespace);
                 $entityFile = $this->printNamespace($entityClass);
-                $dirEntityFile =  $fullPath.'/Entity/'.$entity['class'].'.php';
+                $dirEntityFile = $fullPath.'/Entity/'.$entity['class'].'.php';
 
                 $fileIs = 'created';
+
+                if (isset($entity['oldClassName']) && $entity['class'] !== $entity['oldClassName']) {
+                    $this->deleteEntity($entity['oldClassName'], ucfirst($moduleName), $version);
+                }
                 if (file_exists($dirEntityFile)) {
                     $fileIs = 'updated';
                 }
@@ -63,66 +90,75 @@ class CreatorService
                 $createdStructure[$moduleName][$fileIs][] = $dirEntityFile;
             }
 
-            foreach ($this->creator as $entityName => $data) {
-                if (!empty($data['repository'])) {
-                    $createdStructure[$moduleName]['created'][] = $this->copyTemplateToModule(
-                        'Repository.php', $data['repository'].'.php', $fullPath.'/Repository',
-                        ['{%uModuleName%}', '{%entityName%}', '{%repositoryName%}', '{%version%}'],
-                        [ucfirst($moduleName), $entityName, $data['repository'], $version]
-                    );
-                }
+            if ($updateEntity > 0) {
+                foreach ($this->creator as $entityName => $data) {
+                    if (!empty($data['repository'])) {
+                        $createdStructure[$moduleName]['created'][] = $this->copyTemplateToModule(
+                            'Repository.php', $data['repository'].'.php', $fullPath.'/Repository',
+                            ['{%uModuleName%}', '{%entityName%}', '{%repositoryName%}', '{%version%}'],
+                            [ucfirst($moduleName), $entityName, $data['repository'], $version]
+                        );
+                    }
 
-                if (!empty($data['service'])) {
-                    $createdStructure[$moduleName]['created'][] = $this->copyTemplateToModule(
-                        'Service.php', $data['service'].'.php', $fullPath.'/Service',
-                        ['{%uModuleName%}', '{%lModuleName%}', '{%entityName%}'],
-                        [ucfirst($moduleName), lcfirst($moduleName), $entityName]
-                    );
-                }
+                    if (!empty($data['service'])) {
+                        $createdStructure[$moduleName]['created'][] = $this->copyTemplateToModule(
+                            'Service.php', $data['service'].'.php', $fullPath.'/Service',
+                            ['{%uModuleName%}', '{%lModuleName%}', '{%entityName%}'],
+                            [ucfirst($moduleName), lcfirst($moduleName), $entityName]
+                        );
+                    }
 
-                if (!empty($data['controllers'])) {
-                    /** Eсли есть создаем контроллеры обходим и создаем в зависимости от типа (get, list, post ...) */
-                    foreach ($data['controllers'] as $templateName => $controller) {
-                        foreach ($controller as $controllerName) {
-                            $createdStructure[$moduleName]['created'][] = $this->copyTemplateToModule(
-                                $templateName, $controllerName, $fullPath.'/Controller',
-                                [
-                                    '{%uModuleName%}',
-                                    '{%lModuleName%}',
-                                    '{%entityName%}',
-                                    '{%lEntityName%}',
-                                    '{%version%}'
-                                ],
-                                [ucfirst($moduleName), lcfirst($moduleName), $entityName, lcfirst($entityName), mb_strtolower($version)]
-                            );
+                    if (!empty($data['controllers'])) {
+                        /** Eсли есть создаем контроллеры обходим и создаем в зависимости от типа (get, list, post ...) */
+                        foreach ($data['controllers'] as $templateName => $controller) {
+                            foreach ($controller as $controllerName) {
+                                $createdStructure[$moduleName]['created'][] = $this->copyTemplateToModule(
+                                    $templateName, $controllerName, $fullPath.'/Controller',
+                                    [
+                                        '{%uModuleName%}',
+                                        '{%lModuleName%}',
+                                        '{%entityName%}',
+                                        '{%lEntityName%}',
+                                        '{%version%}',
+                                    ],
+                                    [
+                                        ucfirst($moduleName),
+                                        lcfirst($moduleName),
+                                        $entityName,
+                                        lcfirst($entityName),
+                                        mb_strtolower($version),
+                                    ]
+                                );
+                            }
                         }
                     }
                 }
-            }
 
-            $this->copyTemplateToModule(
-                'README.md', 'README.md', $fullPath.'/',
-                ['{%lModuleName%}'],
-                [lcfirst($moduleName)]
-            );
 
-            // Сбрасываем creator; @todo лучше использовать переменную вместо свойства класса
-            $this->creator = [];
-            // Отфильтровываем пустые значения @todo по хорошему пустых значений не должно быть
-            if (isset($createdStructure[$moduleName]['created'])) {
-                $createdStructure[$moduleName]['created'] = array_filter($createdStructure[$moduleName]['created']);
-            }
-            if (isset($createdStructure[$moduleName]['updated'])) {
-                $createdStructure[$moduleName]['updated'] = array_filter($createdStructure[$moduleName]['updated']);
-            }
-            $this->addDoctrineConfigure($moduleName, $version);
+                $this->copyTemplateToModule(
+                    'README.md', 'README.md', $fullPath.'/',
+                    ['{%lModuleName%}'],
+                    [lcfirst($moduleName)]
+                );
 
-            //Обновление структуры бд
-            $process = new Process(['php', 'bin/console', 'd:s:u', '-f', '--em=' . mb_strtolower($moduleName)]);
-            $process->setWorkingDirectory($this->kernel->getProjectDir());
-            $process->setTimeout(3600);
-            $process->setIdleTimeout(60);
-            $process->run();
+                // Сбрасываем creator; @todo лучше использовать переменную вместо свойства класса
+                $this->creator = [];
+                // Отфильтровываем пустые значения @todo по хорошему пустых значений не должно быть
+                if (isset($createdStructure[$moduleName]['created'])) {
+                    $createdStructure[$moduleName]['created'] = array_filter($createdStructure[$moduleName]['created']);
+                }
+                if (isset($createdStructure[$moduleName]['updated'])) {
+                    $createdStructure[$moduleName]['updated'] = array_filter($createdStructure[$moduleName]['updated']);
+                }
+
+                $this->addDoctrineConfigure($moduleName, $version);
+
+                $process = new Process(['php', 'bin/console', 'd:s:u', '-f', '--em='.lcfirst($moduleName)]);
+                $process->setWorkingDirectory($this->getProjectDir());
+                $process->setTimeout(3600);
+                $process->setIdleTimeout(60);
+                $process->run();
+            }
         }
 
         return $createdStructure;
@@ -162,7 +198,7 @@ class CreatorService
             'ManyToMany',
             'ManyToOne',
             'OneToOne',
-            'OneToMany'
+            'OneToMany',
         ];
 
         foreach ($entity['properties'] as $property) {
@@ -180,7 +216,7 @@ class CreatorService
                 unset($property['column']['type']);
 
                 if (isset($property['column']['nullable'])) {
-                    $addProperty->addAttribute('ORM\JoinColumn', ['nullable' => (bool) $property['column']['nullable']]);
+                    $addProperty->addAttribute('ORM\JoinColumn', ['nullable' => (bool)$property['column']['nullable']]);
                 }
                 unset($property['column']['nullable']);
 
@@ -268,7 +304,12 @@ class CreatorService
 
             $setter = $class->addMethod('set'.ucfirst($propertyName));
             $setter->addParameter($propertyName)->setType($phpPropertyType);
-            $setter->addBody('$this->'.$propertyName.' = $'.$propertyName.';'.PHP_EOL.PHP_EOL.'return $this;');
+            $setter->addBody(
+                '$this->'.$propertyName.' = $'.$propertyName.';'.
+                PHP_EOL.
+                PHP_EOL.
+                'return $this;'
+            );
             $setter->setReturnType('self');
 
             $getter = $class->addMethod('get'.ucfirst($propertyName));
@@ -278,7 +319,9 @@ class CreatorService
 
         // Собираем группы и по ним определяем какие контролеры нужны для работы
         foreach ($group as $group) {
-            $this->creator[$entity['class']]['controllers'][$this->getControllerTemplate($group)][] = $this->getControllerName(
+            $this->creator[$entity['class']]['controllers'][$this->getControllerTemplate(
+                $group
+            )][] = $this->getControllerName(
                 $group,
                 $entity['class']
             );
@@ -287,7 +330,10 @@ class CreatorService
         if (!empty($this->creator[$entity['class']]['controllers'])) {
             $this->creator[$entity['class']]['service'] = $entity['class'].'Service';
             $this->creator[$entity['class']]['repository'] = $entity['class'].'Repository';
-            $class->addAttribute('ORM\Entity', ['repositoryClass' => $moduleNamespace.'\Repository\\' . $entity['class'].'Repository']);
+            $class->addAttribute(
+                'ORM\Entity',
+                ['repositoryClass' => $moduleNamespace.'\Repository\\'.$entity['class'].'Repository']
+            );
         } else {
             $class->addAttribute('ORM\Entity');
         }
@@ -421,24 +467,61 @@ class CreatorService
 
     private function addDoctrineConfigure(string $moduleName, string $version = 'V1'): void
     {
-        $configDir = $this->kernel->getProjectDir() . '/config/packages/doctrine.yaml';
-        $config = new ConfigEditor($configDir);
+        $configDir = $this->getProjectDir().'/config/packages/doctrine.yaml';
+        $file = fopen($configDir, 'r+');
 
-        $value = $config->parse();
-        $value['doctrine']['orm']['entity_managers'][lcfirst($moduleName)] = [
-            "connection" => 'default',
-            "mappings" => [
-                ucfirst($moduleName) => [
-                    "is_bundle" => false,
-                    "type" => "attribute",
-                    "dir" => '%kernel.project_dir%/module/'.ucfirst($moduleName).'/'.$version.'/Entity',
-                    "prefix" => 'Module\\'.ucfirst($moduleName).'\\'.$version.'\Entity',
-                    "alias" => ucfirst($moduleName)."Module",
+        if (flock($file, LOCK_EX)) {
+            $value = Yaml::parse(fread($file, filesize($configDir)));
+            $value['doctrine']['orm']['entity_managers'][lcfirst($moduleName)] = [
+                "connection" => 'default',
+                "mappings" => [
+                    ucfirst($moduleName) => [
+                        "is_bundle" => false,
+                        "type" => "attribute",
+                        "dir" => '%kernel.project_dir%/module/'.ucfirst($moduleName).'/'.$version.'/Entity',
+                        "prefix" => 'Module\\'.ucfirst($moduleName).'\\'.$version.'\Entity',
+                        "alias" => ucfirst($moduleName)."Module",
+                    ],
                 ],
-            ],
-        ];
+            ];
+            ftruncate($file, 0);
+            rewind($file);
+            fwrite($file, Yaml::dump($value, 10));
+            fflush($file);
+            flock($file, LOCK_UN);
+        } else {
+            echo "Не удалось получить блокировку!";
+        }
+    }
 
-        $config->save($value);
+    public function deleteTableToByModule(string $module): void
+    {
+        $em = $this->getEntityManager(lcfirst($module));
+        $objects = $em->getMetadataFactory()->getAllMetadata();
+
+        foreach ($objects as $entity) {
+            $connection = $em->getConnection();
+            $stmt = $connection->prepare('DROP TABLE '.$entity->table['name']);
+            $stmt->execute();
+        }
+    }
+
+    public function deleteDoctrineConfigure(string $moduleName, string $version = 'V1'): void
+    {
+        $configDir = $this->getProjectDir().'/config/packages/doctrine.yaml';
+        $file = fopen($configDir, 'r+');
+
+        if (flock($file, LOCK_EX)) {
+            $value = Yaml::parse(fread($file, filesize($configDir)));
+            unset($value['doctrine']['orm']['entity_managers'][lcfirst($moduleName)]);
+            ftruncate($file, 0);
+            rewind($file);
+            fwrite($file, Yaml::dump($value, 10));
+            fflush($file);
+            flock($file, LOCK_UN);
+        } else {
+            echo "Не удалось получить блокировку!";
+        }
     }
 
     /**
@@ -450,5 +533,57 @@ class CreatorService
     public function getEntityManager(string $name): ObjectManager
     {
         return $this->registry->getManager($name);
+    }
+
+    /**
+     * @return \Symfony\Component\Filesystem\Filesystem
+     */
+    public function getFilesystem(): Filesystem
+    {
+        return $this->filesystem;
+    }
+
+    /**
+     * @return string
+     */
+    public function getProjectDir(): string
+    {
+        return $this->kernel->getProjectDir();
+    }
+
+    public function deleteEntity(string $entityName, string $moduleName, $version = 'V1'): bool
+    {
+        $fullPathToEntity = $this->getProjectDir().'/module/'.$moduleName.'/'.$version.'/Entity/'.$entityName.'.php';
+        $fullPathToGetController = $this->getProjectDir(
+            ).'/module/'.$moduleName.'/'.$version.'/Controller/'.$entityName.'GetController.php';
+        $fullPathToListController = $this->getProjectDir(
+            ).'/module/'.$moduleName.'/'.$version.'/Controller/'.$entityName.'ListController.php';
+        $fullPathToPostController = $this->getProjectDir(
+            ).'/module/'.$moduleName.'/'.$version.'/Controller/'.$entityName.'PostController.php';
+        $fullPathToPutController = $this->getProjectDir(
+            ).'/module/'.$moduleName.'/'.$version.'/Controller/'.$entityName.'PutController.php';
+        $fullPathToDeleteController = $this->getProjectDir(
+            ).'/module/'.$moduleName.'/'.$version.'/Controller/'.$entityName.'DeleteController.php';
+
+        $this->getFilesystem()->remove($fullPathToEntity);
+        $this->getFilesystem()->remove($fullPathToGetController);
+        $this->getFilesystem()->remove($fullPathToListController);
+        $this->getFilesystem()->remove($fullPathToPostController);
+        $this->getFilesystem()->remove($fullPathToPutController);
+        $this->getFilesystem()->remove($fullPathToDeleteController);
+
+        $em = $this->getEntityManager(lcfirst($moduleName));
+        $sql = 'DROP TABLE '.mb_strtolower($entityName);
+        $connection = $em->getConnection();
+        $stmt = $connection->prepare($sql);
+        $stmt->execute();
+
+        $process = new Process(['php', 'bin/console', 'd:s:u', '-f', '--em='.mb_strtolower($moduleName)]);
+        $process->setWorkingDirectory($this->getProjectDir());
+        $process->setTimeout(3600);
+        $process->setIdleTimeout(60);
+        $process->start();
+
+        return true;
     }
 }

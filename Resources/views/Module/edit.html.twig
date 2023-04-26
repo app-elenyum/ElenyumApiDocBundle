@@ -11,6 +11,7 @@
     {% endblock stylesheets %}
 
     {% block javascripts %}
+        {# https://unpkg.com/browse/primevue@^3/dialog/dialog.min.js #}
         {{ elenyumAsset(assets_mode, 'edit/js/axios.min.js') }}
         {{ elenyumAsset(assets_mode, 'edit/js/vue.global.js') }}
         {{ elenyumAsset(assets_mode, 'edit/js/core.min.js') }}
@@ -22,9 +23,23 @@
         {{ elenyumAsset(assets_mode, 'edit/js/menu.min.js') }}
         {{ elenyumAsset(assets_mode, 'edit/js/tag.min.js') }}
         {{ elenyumAsset(assets_mode, 'edit/js/dialog.min.js') }}
+        {{ elenyumAsset(assets_mode, 'edit/js/blockui.min.js') }}
     {% endblock javascripts %}
 
     <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        #app {
+            margin: 5px;
+        }
+
+        div.p-blockui-container {
+            min-height: 100%;
+        }
+
         .ad-item {
             padding: 5px;
             margin-bottom: 10px;
@@ -143,31 +158,32 @@
 
 <body>
 <div id="app">
-    <div class="grid">
-        <div class="col-3" style="padding: 0">
-            <p-card class="settings" role="region">
-                <template #title>
-                    <div class="p-inputgroup" style="border-radius: unset">
-                        <div class="settings-title">ELENYUM</div>
-                        <p-button class="p-panel-header-icon p-link" @click="onSave()">
-                            <span class="pi pi-save"></span>
-                        </p-button>
-                        <p-button class="p-panel-header-icon p-link" @click="settingToggle($event)">
-                            <span class="pi pi-cog"></span>
-                        </p-button>
-                    </div>
-                </template>
-                <template #content>
-                    <!--  Если выбрана колонка   -->
-                    <div class="ad-item" :hidden="selected != 'column'">
-                        <p-button icon="pi pi-trash" @click="onRemoveColumn()"
-                                  class="p-button-rounded p-button-danger p-button-outlined button-remove-item"></p-button>
-                        <span class="p-float-label">
+    <p-blockui :blocked="blockedApp">
+        <div class="grid">
+            <div class="col-3" style="padding: 0">
+                <p-card class="settings" role="region">
+                    <template #title>
+                        <div class="p-inputgroup" style="border-radius: unset">
+                            <div class="settings-title">ELENYUM</div>
+                            <p-button class="p-panel-header-icon p-link" @click="onSave()">
+                                <span class="pi pi-save"></span>
+                            </p-button>
+                            <p-button class="p-panel-header-icon p-link" @click="settingToggle($event)">
+                                <span class="pi pi-cog"></span>
+                            </p-button>
+                        </div>
+                    </template>
+                    <template #content>
+                        <!--  Если выбрана колонка   -->
+                        <div class="ad-item" :hidden="selected != 'column'">
+                            <p-button icon="pi pi-trash" @click="onRemoveColumn()"
+                                      class="p-button-rounded p-button-danger p-button-outlined button-remove-item"></p-button>
+                            <span class="p-float-label">
                             <p-inputtext id="ad-column-text-name" class="ad-text" type="text"
                                          v-model="columnEdit.name"></p-inputtext>
                             <label for="ad-text-name">Name column</label>
                         </span>
-                        <span class="p-float-label">
+                            <span class="p-float-label">
                             <p-multiselect id="ad-item-multiselesct-groups" class="ad-item-multiselesct"
                                            v-model="columnEdit.group"
                                            :options="groups"
@@ -175,13 +191,14 @@
                                            display="chip"></p-multiselect>
                             <label for="ad-item-multiselesct-groups">Groups</label>
                         </span>
-                        <span class="p-float-label">
+                            <span class="p-float-label">
                             <p-dropdown id="ad-dropdown-type" class="ad-dropdown" v-model="columnEdit.column.type"
                                         :options="types" optionLabel="name" optionValue="code"
+                                        @change="changeColumnType($event, columnEdit)"
                                         placeholder="Select a Type"></p-dropdown>
                             <label for="ad-dropdown-type">Type</label>
                         </span>
-                        <template v-if="
+                            <template v-if="
                             columnEdit.column.type == 'ManyToMany' ||
                             columnEdit.column.type == 'ManyToOne' ||
                             columnEdit.column.type == 'OneToOne' ||
@@ -191,13 +208,14 @@
                                 <p-dropdown id="ad-dropdown-targetEntity" class="ad-dropdown"
                                             v-model="columnEdit.column.targetEntity"
                                             :options="targetEntity" optionLabel="name" optionValue="code"
-                                            placeholder="Select a Type"></p-dropdown>
+                                            placeholder="Select a Type">
+                                </p-dropdown>
                                 <label for="ad-dropdown-targetEntity">Target entity</label>
                             </span>
 
-                        </template>
-                        <template
-                                v-if="columnEdit.column.type === 'ManyToMany' || columnEdit.column.type === 'OneToOne' || columnEdit.column.type === 'OneToMany' ">
+                            </template>
+                            <template
+                                    v-if="columnEdit.column.type === 'ManyToMany' || columnEdit.column.type === 'OneToOne' || columnEdit.column.type === 'OneToMany' ">
                             <span class="p-float-label">
                                 <p-dropdown id="ad-dropdown-mapped-by" class="ad-dropdown"
                                             v-model="columnEdit.column.mappedBy"
@@ -205,120 +223,120 @@
                                             placeholder="Select a Type"></p-dropdown>
                                 <label for="ad-dropdown-mapped-by">Mapped by</label>
                             </span>
-                        </template>
+                            </template>
 
-                        <template v-if="columnEdit.validator">
-                            <h4>Validator
-                                <p-button icon="pi pi-plus"
-                                          class="p-button-rounded p-button-outlined button-add-validator"
-                                          @click="validatorToggle($event)"></p-button>
-                            </h4>
+                            <template v-if="columnEdit.validator">
+                                <h4>Validator
+                                    <p-button icon="pi pi-plus"
+                                              class="p-button-rounded p-button-outlined button-add-validator"
+                                              @click="validatorToggle($event)"></p-button>
+                                </h4>
 
-                            <template class="mb-5" v-if="columnEdit.validator && columnEdit.validator.length">
-                                <p-card class="validator-card mb-5">
-                                    <template #title>
+                                <template class="mb-5" v-if="columnEdit.validator && columnEdit.validator.length">
+                                    <p-card class="validator-card mb-5">
+                                        <template #title>
                                         <span class="p-buttonset">
                                             Length
                                             <p-button icon="pi pi-trash" @click="onRemoveValidator($event, 'length')"
                                                       class="p-button p-component p-button-icon-only p-button-rounded p-button-danger p-button-text button-remove-validator"></p-button>
                                         </span>
-                                    </template>
-                                    <template #content>
+                                        </template>
+                                        <template #content>
                                         <span class="p-float-label">
                                             <p-inputtext id="ad-min-valid" class="ad-text p-inputtext-sm" type="integer"
                                                          v-model="columnEdit.validator.length.min"></p-inputtext>
                                             <label for="ad-min-valid">Min length</label>
                                         </span>
-                                        <span class="p-float-label">
+                                            <span class="p-float-label">
                                             <p-inputtext id="ad-max-valid" class="ad-text p-inputtext-sm" type="integer"
                                                          v-model="columnEdit.validator.length.max"></p-inputtext>
                                             <label for="ad-max-valid">Max length</label>
                                         </span>
-                                    </template>
-                                </p-card>
-                            </template>
-                            <template v-if="columnEdit.validator && columnEdit.validator.count">
-                                <p-card class="validator-card mb-5">
-                                    <template #title>
+                                        </template>
+                                    </p-card>
+                                </template>
+                                <template v-if="columnEdit.validator && columnEdit.validator.count">
+                                    <p-card class="validator-card mb-5">
+                                        <template #title>
                                         <span class="p-buttonset">
                                             Count
                                             <p-button icon="pi pi-trash" @click="onRemoveValidator($event, 'count')"
                                                       class="p-button p-component p-button-icon-only p-button-rounded p-button-danger p-button-text button-remove-validator"></p-button>
                                         </span>
-                                    </template>
-                                    <template #content>
+                                        </template>
+                                        <template #content>
                                         <span class="p-float-label">
                                             <p-inputtext id="ad-min-count-valid" class="ad-text p-inputtext-sm"
                                                          type="integer"
                                                          v-model="columnEdit.validator.count.max"></p-inputtext>
                                             <label for="ad-min-count-valid">Min count</label>
                                         </span>
-                                        <span class="p-float-label">
+                                            <span class="p-float-label">
                                             <p-inputtext id="ad-max-count-valid" class="ad-text p-inputtext-sm"
                                                          type="integer"
                                                          v-model="columnEdit.validator.count.max"></p-inputtext>
                                             <label for="ad-max-count-valid">Max count</label>
                                         </span>
-                                    </template>
-                                </p-card>
-                            </template>
-                            <template v-if="columnEdit.validator && columnEdit.validator.regex">
-                                <p-card class="validator-card mb-5">
-                                    <template #title>
+                                        </template>
+                                    </p-card>
+                                </template>
+                                <template v-if="columnEdit.validator && columnEdit.validator.regex">
+                                    <p-card class="validator-card mb-5">
+                                        <template #title>
                                         <span class="p-buttonset">
                                             Regex
                                             <p-button icon="pi pi-trash" @click="onRemoveValidator($event, 'regex')"
                                                       class="p-button p-component p-button-icon-only p-button-rounded p-button-danger p-button-text button-remove-validator"></p-button>
                                         </span>
-                                    </template>
-                                    <template #content>
+                                        </template>
+                                        <template #content>
                                         <span class="p-float-label">
                                             <p-inputtext id="ad-regex-valid" class="ad-text p-inputtext-sm" type="text"
                                                          v-model="columnEdit.validator.regex.pattern"></p-inputtext>
                                             <label for="ad-regex-valid">Regex</label>
                                         </span>
-                                    </template>
-                                </p-card>
-                            </template>
-                            <template v-if="columnEdit.validator && columnEdit.validator.notNull">
-                                <p-card class="validator-card mb-5">
-                                    <template #title>
+                                        </template>
+                                    </p-card>
+                                </template>
+                                <template v-if="columnEdit.validator && columnEdit.validator.notNull">
+                                    <p-card class="validator-card mb-5">
+                                        <template #title>
                                         <span class="p-buttonset">
                                             NotNull
                                             <p-button icon="pi pi-trash" @click="onRemoveValidator($event, 'notNull')"
                                                       class="p-button p-component p-button-icon-only p-button-rounded p-button-danger p-button-text button-remove-validator"></p-button>
                                         </span>
-                                    </template>
-                                    <template #content>
-                                    </template>
-                                </p-card>
-                            </template>
-                            <template v-if="columnEdit.validator && columnEdit.validator.email">
-                                <p-card class="validator-card mb-5">
-                                    <template #title>
+                                        </template>
+                                        <template #content>
+                                        </template>
+                                    </p-card>
+                                </template>
+                                <template v-if="columnEdit.validator && columnEdit.validator.email">
+                                    <p-card class="validator-card mb-5">
+                                        <template #title>
                                         <span class="p-buttonset">
                                             Email
                                             <p-button icon="pi pi-trash" @click="onRemoveValidator($event, 'email')"
                                                       class="p-button p-component p-button-icon-only p-button-rounded p-button-danger p-button-text button-remove-validator"></p-button>
                                         </span>
-                                    </template>
-                                </p-card>
-                            </template>
-                            <template v-if="columnEdit.validator && columnEdit.validator.notBlank">
-                                <p-card class="validator-card mb-5">
-                                    <template #title>
+                                        </template>
+                                    </p-card>
+                                </template>
+                                <template v-if="columnEdit.validator && columnEdit.validator.notBlank">
+                                    <p-card class="validator-card mb-5">
+                                        <template #title>
                                         <span class="p-buttonset">
                                             NotBlank
                                             <p-button icon="pi pi-trash" @click="onRemoveValidator($event, 'notBlank')"
                                                       class="p-button p-component p-button-icon-only p-button-rounded p-button-danger p-button-text button-remove-validator"></p-button>
                                         </span>
-                                    </template>
-                                </p-card>
+                                        </template>
+                                    </p-card>
+                                </template>
                             </template>
-                        </template>
-                    </div>
-                    <!--  Если выбрана сущность   -->
-                    <div class="ad-item" :hidden="selected != 'entity'">
+                        </div>
+                        <!--  Если выбрана сущность   -->
+                        <div class="ad-item" :hidden="selected != 'entity'">
                         <span class="p-float-label">
 <!--                       @todo Если класс изменился нужно понимать какая сущность была изменена и на какаую (записывать старое имя) на backend пока не учтено-->
                             <p-inputtext id="ad-text-name" class="ad-text" type="text"
@@ -326,21 +344,22 @@
                             <label for="ad-text-name">Entity name</label>
                         </span>
 
-                        <p-dialog v-model:visible="showRoleDialog" modal header="Role" position="left"
-                                  :style="{ width: '20vw' }">
-                            <p>
-                            <div class="flex flex-column gap-2">
-                                <label for="username">Role name</label>
-                                <p-inputtext id="username" v-model="inputRole"
-                                             aria-describedby="username-help"/>
-                            </div>
-                            </p>
-                            <template #footer>
-                                <p-button label="Add" icon="pi pi-check" @click="addRole()" autofocus/>
-                            </template>
-                        </p-dialog>
-                        <p-card class="validator-card mt-5">
-                            <template #title>
+                            <p-dialog v-model:visible="showRoleDialog" modal header="Role" position="left"
+                                      :style="{ width: '20vw' }">
+                                <p>
+                                <div class="flex flex-column gap-2">
+                                    <label for="username">Role name</label>
+                                    <p-inputtext id="username" v-model="inputRole"
+                                                 aria-describedby="username-help"/>
+                                </div>
+                                </p>
+                                <template #footer>
+                                    <p-button label="Add" icon="pi pi-check" @click="addRole()" autofocus/>
+                                </template>
+                            </p-dialog>
+                            <p-card class="validator-card mt-5">
+                                <template #title>
+                                <span class="p-buttonset">
                                 <span class="p-buttonset">
                                     GET
                                 </span>
@@ -348,8 +367,8 @@
                                           class="p-button-rounded p-button-outlined button-add-role"
                                           @click="showRoleDialog = true">
                                 </p-button>
-                            </template>
-                            <template #content>
+                                </template>
+                                <template #content>
                                 <span class="p-float-label">
                                     <p-multiselect id="ad-item-multiselesct-role-get" class="ad-item-multiselesct"
                                                    v-model="entityEdit.roles.GET"
@@ -357,154 +376,204 @@
                                                    placeholder="Select roles"
                                                    option-label="name"
                                                    option-value="systemName"
-                                                   display="chip"></p-multiselect>
+                                                   display="chip">
+                                        <template #option="value">
+                                            <div class="flex align-items-center gap-3">
+                                                <span class="flex align-items-center gap-2">
+                                                    <span class="font-semibold">[[value.option.name]]</span>
+                                                </span>
+                                                <p-button class="p-button-text"
+                                                          @click="removeRole($event, 'GET', value.option.id, value.option.name)">
+                                                    <i class="pi pi-times"></i>
+                                                </p-button>
+                                            </div>
+                                        </template>
+                                    </p-multiselect>
                                     <label for="ad-item-multiselesct-role-get">Roles can access</label>
                                 </span>
-                            </template>
-                        </p-card>
-                        <p-card class="validator-card mt-5">
-                            <template #title>
+                                </template>
+                            </p-card>
+                            <p-card class="validator-card mt-5">
+                                <template #title>
                                 <span class="p-buttonset">
                                     POST
                                 </span>
-                                <p-button icon="pi pi-plus"
-                                          class="p-button-rounded p-button-outlined button-add-role"
-                                          @click="showRoleDialog = true">
-                                </p-button>
-                            </template>
-                            <template #content>
+                                    <p-button icon="pi pi-plus"
+                                              class="p-button-rounded p-button-outlined button-add-role"
+                                              @click="showRoleDialog = true">
+                                    </p-button>
+                                </template>
+                                <template #content>
                                 <span class="p-float-label">
                                     <p-multiselect id="ad-item-multiselesct-role-post" class="ad-item-multiselesct"
                                                    v-model="entityEdit.roles.POST" :options="roles"
                                                    placeholder="Select roles"
                                                    option-label="name"
                                                    option-value="systemName"
-                                                   display="chip"></p-multiselect>
+                                                   display="chip">
+                                        <template #option="value">
+                                            <div class="flex align-items-center gap-3">
+                                                <span class="flex align-items-center gap-2">
+                                                    <span class="font-semibold">[[value.option.name]]</span>
+                                                </span>
+                                                <p-button class="p-button-text"
+                                                          @click="removeRole($event, 'POST', value.option.id, value.option.name)">
+                                                    <i class="pi pi-times"></i>
+                                                </p-button>
+                                            </div>
+                                        </template>
+                                    </p-multiselect>
                                     <label for="ad-item-multiselesct-role-post">Roles can access</label>
                                 </span>
-                            </template>
-                        </p-card>
-                        <p-card class="validator-card mt-5">
-                            <template #title>
+                                </template>
+                            </p-card>
+                            <p-card class="validator-card mt-5">
+                                <template #title>
                                 <span class="p-buttonset">
                                     PUT
                                 </span>
-                                <p-button icon="pi pi-plus"
-                                          class="p-button-rounded p-button-outlined button-add-role"
-                                          @click="showRoleDialog = true">
-                                </p-button>
-                            </template>
-                            <template #content>
+                                    <p-button icon="pi pi-plus"
+                                              class="p-button-rounded p-button-outlined button-add-role"
+                                              @click="showRoleDialog = true">
+                                    </p-button>
+                                </template>
+                                <template #content>
                                 <span class="p-float-label">
                                     <p-multiselect id="ad-item-multiselesct-role-put" class="ad-item-multiselesct"
                                                    v-model="entityEdit.roles.PUT" :options="roles"
                                                    placeholder="Select roles"
                                                    option-label="name"
                                                    option-value="systemName"
-                                                   display="chip"></p-multiselect>
+                                                   display="chip">
+                                        <template #option="value">
+                                            <div class="flex align-items-center gap-3">
+                                                <span class="flex align-items-center gap-2">
+                                                    <span class="font-semibold">[[value.option.name]]</span>
+                                                </span>
+                                                <p-button class="p-button-text"
+                                                          @click="removeRole($event, 'PUT', value.option.id, value.option.name)">
+                                                    <i class="pi pi-times"></i>
+                                                </p-button>
+                                            </div>
+                                        </template>
+                                    </p-multiselect>
                                     <label for="ad-item-multiselesct-role-put">Roles can access</label>
                                 </span>
-                            </template>
-                        </p-card>
-                        <p-card class="validator-card mt-5">
-                            <template #title>
+                                </template>
+                            </p-card>
+                            <p-card class="validator-card mt-5">
+                                <template #title>
                                 <span class="p-buttonset">
                                     DELETE
                                 </span>
-                                <p-button icon="pi pi-plus"
-                                          class="p-button-rounded p-button-outlined button-add-role"
-                                          @click="showRoleDialog = true">
-                                </p-button>
-                            </template>
-                            <template #content>
+                                    <p-button icon="pi pi-plus"
+                                              class="p-button-rounded p-button-outlined button-add-role"
+                                              @click="showRoleDialog = true">
+                                    </p-button>
+                                </template>
+                                <template #content>
                                 <span class="p-float-label">
                                     <p-multiselect id="ad-item-multiselesct-role-delete" class="ad-item-multiselesct"
                                                    v-model="entityEdit.roles.DELETE" :options="roles"
                                                    placeholder="Select roles"
                                                    option-label="name"
                                                    option-value="systemName"
-                                                   display="chip"></p-multiselect>
+                                                   display="chip">
+                                        <template #option="value">
+                                            <div class="flex align-items-center gap-3">
+                                                <span class="flex align-items-center gap-2">
+                                                    <span class="font-semibold">[[value.option.name]]</span>
+                                                </span>
+                                                <p-button class="p-button-text"
+                                                          @click="removeRole($event, 'DELETE', value.option.id, value.option.name)">
+                                                    <i class="pi pi-times"></i>
+                                                </p-button>
+                                            </div>
+                                        </template>
+                                    </p-multiselect>
                                     <label for="ad-item-multiselesct-role-delete">Roles can access</label>
                                 </span>
-                            </template>
-                        </p-card>
+                                </template>
+                            </p-card>
 
-                    </div>
-                    <!--  Если выбран модуль   -->
-                    <div class="ad-item" :hidden="selected != 'module'">
+                        </div>
+                        <!--  Если выбран модуль   -->
+                        <div class="ad-item" :hidden="selected != 'module'">
                         <span class="p-float-label">
                             <p-inputtext id="ad-module-text-name" class="ad-text" type="text"
                                          v-model="moduleEdit.name"></p-inputtext>
                             <label for="ad-text-name">Module name</label>
                         </span>
-                    </div>
-                </template>
-            </p-card>
-        </div>
-        <div class="col-9">
-            <div class="grid">
-                <template v-for="(moduleData, moduleName) in modules">
-                    <div class="col-3">
-                        <p-card role="region">
-                            <template #title>
-                                <div @dblclick="onDubleclickModule($event, moduleData)" draggable="true">
-                                    [[ moduleData.name ]]
-                                </div>
-                                <span style="font-size: 0.5em; font-weight: 300">Module name</span>
-                                <p-button class="p-panel-header-icon p-link mr-2" style="float: right"
-                                          @click="moduleToggle($event, moduleName)">
-                                    <span class="pi pi-cog"></span>
-                                </p-button>
-                            </template>
-                            <template #content>
-                                <template v-for="(entity, entityPosition) in moduleData.entity">
-                                    <p-panel :toggleable="true" style="margin-bottom: 20px">
-                                        <template #header>
-                                            <div class="entity-title" draggable="true"
-                                                 @dblclick="onDubleclickEntity($event, entity)">
-                                                <div class="short-entity-name">[[ entity.class ]]</div>
-                                            </div>
-                                        </template>
-                                        <template #icons>
-                                            <p-button class="p-panel-header-icon p-link mr-2"
-                                                      @click="toggle($event, moduleName, entityPosition)">
-                                                <span class="pi pi-cog"></span>
-                                            </p-button>
-                                            <p-menu id="config_menu" :model="items" :popup="true"></p-menu>
-                                        </template>
-                                        <div class="entity-desc">
-                                            <template v-for="(property, propertyPosition) in entity.properties">
-                                                <div draggable="true"
-                                                     @dblclick="onDubleclickColumn($event, property, entity, moduleData, moduleName, entityPosition, propertyPosition)"
-                                                     @drop="onDrop($event, propertyPosition)" @dragover.prevent
-                                                     @dragenter.prevent
-                                                     @dragstart="startDrag($event, property, moduleName, entityPosition, propertyPosition)"
-                                                     class="entity-desc-item">
-                                                    <i class="pi pi-list item-icon"></i>
-                                                    <div class="entity-desc-text">
-                                                        <span class="item-name" v-if="!!property">[[ property.name ]] ([[ property.column.type]])</span>
-                                                        <span class="item-groups"
-                                                              v-if="!!property">[[ property.group]]</span>
-                                                    </div>
+                        </div>
+                    </template>
+                </p-card>
+            </div>
+            <div class="col-9">
+                <div class="grid">
+                    <template v-for="(moduleData, moduleName) in modules">
+                        <div class="col-3">
+                            <p-card role="region">
+                                <template #title>
+                                    <div @dblclick="onDubleclickModule($event, moduleData)" draggable="true">
+                                        [[ moduleData.name ]]
+                                    </div>
+                                    <span style="font-size: 0.5em; font-weight: 300">Module name</span>
+                                    <p-button class="p-panel-header-icon p-link mr-2" style="float: right"
+                                              @click="moduleToggle($event, moduleName)">
+                                        <span class="pi pi-cog"></span>
+                                    </p-button>
+                                </template>
+                                <template #content>
+                                    <template v-for="(entity, entityPosition) in moduleData.entity">
+                                        <p-panel :toggleable="true" style="margin-bottom: 20px">
+                                            <template #header>
+                                                <div class="entity-title" draggable="true"
+                                                     @dblclick="onDubleclickEntity($event, entity)">
+                                                    <div class="short-entity-name">[[ entity.class ]]</div>
                                                 </div>
                                             </template>
-                                        </div>
-                                    </p-panel>
+                                            <template #icons>
+                                                <p-button class="p-panel-header-icon p-link mr-2"
+                                                          @click="toggle($event, moduleName, entityPosition)">
+                                                    <span class="pi pi-cog"></span>
+                                                </p-button>
+                                                <p-menu id="config_menu" :model="items" :popup="true"></p-menu>
+                                            </template>
+                                            <div class="entity-desc">
+                                                <template v-for="(property, propertyPosition) in entity.properties">
+                                                    <div draggable="true"
+                                                         @dblclick="onDubleclickColumn($event, property, entity, moduleData, moduleName, entityPosition, propertyPosition)"
+                                                         @drop="onDrop($event, propertyPosition)" @dragover.prevent
+                                                         @dragenter.prevent
+                                                         @dragstart="startDrag($event, property, moduleName, entityPosition, propertyPosition)"
+                                                         class="entity-desc-item">
+                                                        <i class="pi pi-list item-icon"></i>
+                                                        <div class="entity-desc-text">
+                                                            <span class="item-name" v-if="!!property">[[ property.name ]] ([[ property.column.type]])</span>
+                                                            <span class="item-groups"
+                                                                  v-if="!!property">[[ property.group ]]</span>
+                                                        </div>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </p-panel>
+                                    </template>
                                 </template>
-                            </template>
-                        </p-card>
-                    </div>
+                            </p-card>
+                        </div>
 
 
-                </template>
-                <!--               Это костыль но пока работает оставляем  -->
-                <p-menu id="overlay_menu" ref="menu" :model="items" :popup="true"></p-menu>
-                <p-menu id="overlay_menu_module" ref="menuModule" :model="moduleItems" :popup="true"></p-menu>
-                <p-menu id="overlay_menu_setting" ref="menuSetting" :model="settingItems" :popup="true"></p-menu>
-                <p-menu id="overlay_menu_validator" ref="menuValidator" :model="validatorItems" :popup="true"></p-menu>
+                    </template>
+                    <!--               Это костыль но пока работает оставляем  -->
+                    <p-menu id="overlay_menu" ref="menu" :model="items" :popup="true"></p-menu>
+                    <p-menu id="overlay_menu_module" ref="menuModule" :model="moduleItems" :popup="true"></p-menu>
+                    <p-menu id="overlay_menu_setting" ref="menuSetting" :model="settingItems" :popup="true"></p-menu>
+                    <p-menu id="overlay_menu_validator" ref="menuValidator" :model="validatorItems"
+                            :popup="true"></p-menu>
+                </div>
             </div>
         </div>
-    </div>
+    </p-blockui>
 </div>
 
 <script>
@@ -563,6 +632,65 @@
             this.getGroups()
         },
         methods: {
+            changeColumnType(e, columnEdit) {
+                if (columnEdit.column.type === "") {
+                    return;
+                }
+
+                let haveTargetEntity = [
+                    'ManyToOne',
+                    'ManyToMany',
+                    'OneToOne',
+                    'OneToMany',
+                ];
+                let haveMappedBy = [
+                    'ManyToMany',
+                    'OneToOne',
+                ];
+
+                if (!haveTargetEntity.includes(columnEdit.column.type)) {
+                    this.columnEdit.column.nullable = true;
+                    this.columnEdit.column = Object.keys(columnEdit.column).filter(key => key !== 'targetEntity').reduce((obj, key) => {
+                            obj[key] = columnEdit.column[key];
+                            return obj;
+                        }, {}
+                    );
+                }
+                if (!haveMappedBy.includes(columnEdit.column.type)) {
+                    this.columnEdit.column = Object.keys(columnEdit.column).filter(key => key !== 'mappedBy').reduce((obj, key) => {
+                            obj[key] = columnEdit.column[key];
+                            return obj;
+                        }, {}
+                    );
+                }
+
+                let moduleName = localStorage.moduleName;
+                let entityPosition = localStorage.entityPosition;
+                let propertyPosition = localStorage.propertyPosition;
+
+                /** Сбрасываем фильтр **/
+                this.modules[moduleName]['entity'][entityPosition]['properties'][propertyPosition].validator = {};
+            },
+            removeRole(e, type, roleId, roleText) {
+                e.stopImmediatePropagation();
+                let isDelete = confirm(`Вы действительно хотите удалить роль: "${roleText}"`);
+                let index = this.roles.findIndex(x => x.id === roleId);
+                let role = this.roles[index];
+                let entityEditRoleId = this.entityEdit.roles[type].findIndex(i => i === role.systemName)
+
+                if (isDelete) {
+                    if (entityEditRoleId > -1) {
+                        if (this.entityEdit.roles[type].length === 1) {
+                            this.entityEdit.roles[type] = [];
+                        } else {
+                            delete this.entityEdit.roles[type][entityEditRoleId];
+                        }
+                    }
+
+                    this.roles.splice(index, 1);
+                    this.deleteRoles(roleId);
+                }
+            },
             onDubleclickColumn(evt, column, entity, module, moduleName, entityPosition, propertyPosition) {
                 //Данные нужны для удаления свойства сущности START
                 localStorage.moduleName = moduleName;
@@ -580,7 +708,10 @@
                     id: 0,
                     name: this.inputRole,
                 }
-                this.roles.push(role);
+                this.saveRole(role).then(resp => {
+                    this.roles.push(resp.data.role);
+                });
+
                 this.inputRole = null;
                 this.showRoleDialog = false;
             },
@@ -624,13 +755,24 @@
             },
 
             onSave() {
-                console.log(JSON.stringify(this.modules))
+                /** @todo remove before relised **/
+                console.log(JSON.stringify(this.modules));
+                this.blockedApp = true;
+                this.save(this.modules).then((result) => {
+                    this.getModules();
+                    this.blockedApp = false;
+                });
             },
 
             async getRoles() {
                 axios
                     .get('/elenyum/edit?r=get_roles')
                     .then(response => (this.roles = response.data.roles));
+            },
+
+            async deleteRoles(id) {
+                return axios
+                    .get('/elenyum/edit?r=del_role&id=' + id);
             },
             async getGroups() {
                 axios
@@ -645,7 +787,26 @@
             async getModules() {
                 axios
                     .get('/elenyum/edit?r=get_modules')
-                    .then(response => (this.modules = Object.assign({}, response.data.modules)));
+                    .then(response => {
+                        this.modules = Object.assign({}, response.data.modules);
+                    });
+            },
+            async deleteModule(moduleName) {
+                return axios
+                    .get('/elenyum/edit/?r=del_modules&module=' + moduleName);
+            },
+            async deleteEntity(moduleName, entityName) {
+                return axios
+                    .get('/elenyum/edit?r=del_entity&module=' + moduleName + '&entity=' + entityName);
+            },
+            saveRole(role) {
+                return axios
+                    .post('/elenyum/edit?r=add_role', role);
+            },
+            async save(data) {
+                return axios
+                    .post('/elenyum/edit?r=save', data);
+                // .then(response => (this.modules = Object.assign({}, response.data.modules)));
             }
         },
         computed: {
@@ -716,7 +877,7 @@
                     {
                         label: 'NotNull',
                         name: 'notNull',
-                        forTypes: [],
+                        forTypes: ['string', 'integer'],
                         icon: 'pi pi-plus-circle',
                         command: () => {
                             this.columnEdit.column['nullable'] = false;
@@ -755,6 +916,7 @@
         },
         data() {
             return {
+                blockedApp: false,
                 inputRole: null,
                 roles: [
                     // {
@@ -789,7 +951,11 @@
                                 command: () => {
                                     let moduleName = localStorage.moduleName;
 
-                                    delete this.modules[moduleName];
+                                    this.blockedApp = true;
+                                    this.deleteModule(moduleName).then(() => {
+                                        delete this.modules[moduleName];
+                                        this.blockedApp = false;
+                                    });
                                     this.selected = '';
                                 }
                             },
@@ -836,29 +1002,30 @@
                                 label: 'Add module',
                                 icon: 'pi pi-plus-circle',
                                 command: () => {
-                                    let newEntity = {
-                                        class: 'NewClass_1',
-                                        oldClassName: null,
-                                        roles: {
-                                            GET: [],
-                                            POST: [],
-                                            PUT: [],
-                                            DELETE: []
-                                        },
-                                        properties: [
-                                            {
-                                                name: 'id',
-                                                column: {
-                                                    type: 'id',
-                                                },
-                                                group: ['POST_RES', 'GET', 'LIST'],
-                                                validator: {},
-                                            }
-                                        ]
-                                    };
+                                    let length = Object.keys(this.modules).length,
+                                        code = Math.floor(Math.random() * 10000),
+                                        moduleName = 'newModule_' + length + '' + code,
+                                        newEntity = {
+                                            class: 'Entity_' + moduleName,
+                                            oldClassName: null,
+                                            roles: {
+                                                GET: [],
+                                                POST: [],
+                                                PUT: [],
+                                                DELETE: []
+                                            },
+                                            properties: [
+                                                {
+                                                    name: 'id',
+                                                    column: {
+                                                        type: 'id',
+                                                    },
+                                                    group: ['POST_RES', 'GET', 'LIST'],
+                                                    validator: {},
+                                                }
+                                            ]
+                                        };
 
-                                    let length = Object.keys(this.modules).length;
-                                    let moduleName = 'newModule_' + length;
                                     this.modules[moduleName] = {
                                         name: moduleName,
                                         version: 'V1',
@@ -869,18 +1036,17 @@
 
                                     this.moduleEdit = this.modules[moduleName];
                                     this.selected = 'module';
-
-                                    debugger;
+                                    this.onSave()
                                 }
                             },
                             {
-                                label: 'Install module',
+                                label: 'Install',
                                 icon: 'pi pi-download',
                                 command: () => {
                                 }
                             },
                             {
-                                label: 'Export module',
+                                label: 'Export',
                                 icon: 'pi pi-upload',
                                 command: () => {
                                 }
@@ -896,7 +1062,6 @@
                                 label: 'Edit',
                                 icon: 'pi pi-pencil',
                                 command: (e) => {
-                                    debugger;
                                     let moduleName = localStorage.moduleName;
                                     let entityPosition = localStorage.entityPosition;
 
@@ -910,9 +1075,26 @@
                                 command: () => {
                                     let moduleName = localStorage.moduleName;
                                     let entityPosition = localStorage.entityPosition;
+                                    let entityName = this.modules[moduleName]['entity'][entityPosition].oldClassName;
 
                                     this.modules[moduleName]['entity'].splice(entityPosition, 1);
                                     this.selected = '';
+
+                                    if (this.modules[moduleName]['entity'].length === 0) {
+                                        let isDelete = confirm("Если вы удалите последнюю сущность то удалится модуль. Вы уверены что хотите удалить модуль?");
+                                        if (isDelete) {
+                                            this.blockedApp = true;
+                                            this.deleteModule(moduleName).then(() => {
+                                                delete this.modules[moduleName];
+                                                this.blockedApp = false;
+                                            });
+                                        }
+                                    } else {
+                                        this.blockedApp = true;
+                                        this.deleteEntity(moduleName, entityName).then(() => {
+                                            this.blockedApp = false;
+                                        });
+                                    }
                                 }
                             },
                             {
@@ -927,6 +1109,7 @@
                                         name: '',
                                         column: {
                                             type: 'string',
+                                            nullable: true,
                                         },
                                         group: []
                                     };
@@ -1139,7 +1322,8 @@
             "p-menu": primevue.menu,
             "p-button": primevue.button,
             "p-tag": primevue.tag,
-            "p-dialog": primevue.dialog
+            "p-dialog": primevue.dialog,
+            "p-blockui": primevue.blockui
         }
     };
 

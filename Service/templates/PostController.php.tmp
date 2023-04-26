@@ -76,7 +76,7 @@ class {%entityName%}PostController extends BaseController
             $item = $service->toEntity($request->getContent());
             $this->denyAccessUnlessGranted('POST', $item);
             if (!$item instanceof BaseEntity) {
-               throw new UndefinedEntity({%entityName%}::class . ' or not extend BaseEntity', $id);
+               throw new UndefinedEntity({%entityName%}::class . ' or not extend BaseEntity');
             }
             $service->getEntityManager()->persist($item);
             $service->getEntityManager()->flush();

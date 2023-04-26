@@ -26,7 +26,7 @@ class UserService extends BaseService
         return $this->requestStack->getSession()->getId();
     }
 
-    public function hashPassword(User $user)
+    public function hashPassword(User $user): void
     {
         $user->setPassword(
             $this->passwordHasher->hashPassword(

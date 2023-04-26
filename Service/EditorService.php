@@ -84,26 +84,48 @@ class EditorService
 
                     $toMapping = [];
                     if (!empty($manyToOne)) {
-                        /** @todo нужно пройтись по каждому типу данных связей и корректно собирать параметры и передавать их */
-                        $column['targetEntity'] = $column['type'];
+                        /** @var ManyToOne $manyToOneNewInstance */
+                        $manyToOneNewInstance = $oneToOne->newInstance();
+                        $targetEntityArray = explode(
+                            '\\',
+                            $manyToOneNewInstance->targetEntity
+                        );
+                        $column['targetEntity'] = end($targetEntityArray);
                         $column['type'] = 'ManyToOne';
                     }
                     if (!empty($oneToOne)) {
-                        /** @todo нужно пройтись по каждому типу данных связей и корректно собирать параметры и передавать их */
-                        $column['targetEntity'] = $column['type'];
+                        /** @var OneToOne $oneToOneNewInstance */
+                        $oneToOneNewInstance = $oneToOne->newInstance();
+                        $targetEntityArray = explode(
+                            '\\',
+                            $oneToOneNewInstance->targetEntity
+                        );
+                        $column['targetEntity'] = end($targetEntityArray);
                         $column['type'] = 'OneToOne';
+                        $column['mappedBy'] = $oneToOneNewInstance->mappedBy;
                     }
                     if (!empty($oneToMany)) {
-                        /** @todo нужно пройтись по каждому типу данных связей и корректно собирать параметры и передавать их */
-                        $column['targetEntity'] = $column['type'];
+                        /** @var OneToMany $oneToManyNewInstance */
+                        $oneToManyNewInstance = $oneToMany->newInstance();
+                        $targetEntityArray = explode(
+                            '\\',
+                            $oneToManyNewInstance->targetEntity
+                        );
+                        $column['targetEntity'] = end($targetEntityArray);
                         $column['type'] = 'OneToMany';
                     }
                     if (!empty($manyToMany)) {
-                        /** @todo нужно пройтись по каждому типу данных связей и корректно собирать параметры и передавать их */
-                        $column['targetEntity'] = $column['type'];
-                        $column['type'] = 'ManyToMany';
-                    }
+                        /** @var ManyToMany $manyToManyNewInstance */
+                        $manyToManyNewInstance = $manyToMany->newInstance();
+                        $targetEntityArray = explode(
+                            '\\',
+                            $manyToManyNewInstance->targetEntity
+                        );
 
+                        $column['targetEntity'] = end($targetEntityArray);
+                        $column['type'] = 'ManyToMany';
+                        $column['mappedBy'] = $manyToManyNewInstance->mappedBy;
+                    }
                     if (!empty($columnAttribute) && !empty(
                         $columnAttribute->getArguments()
                         ) && isset($columnAttribute->getArguments()['type'])) {
@@ -112,13 +134,13 @@ class EditorService
                             'nullable' => $columnAttribute->getArguments()['nullable'] ?? false,
                         ];
                     }
+                    if ($property->getName() === 'id') {
+                        $column['type'] = 'id';
+                    }
 
                     $validator = [];
                     $getAttributesValidator = array_filter(
                         [
-                            /**
-                             * @todo нужно получать короткое имя для валидатора
-                             */
                             $property->getAttributes(Length::class)[0] ?? null,
                             $property->getAttributes(NotNull::class)[0] ?? null,
                             $property->getAttributes(Regex::class)[0] ?? null,
@@ -134,6 +156,7 @@ class EditorService
                         $nameClass = lcfirst(
                             str_replace('Symfony\Component\Validator\Constraints\\', '', get_class($objectValidator))
                         );
+                        //получать короткое имя для валидатора
                         $validator[$nameClass] = $item->getArguments();
                     }
 
@@ -148,6 +171,8 @@ class EditorService
                         $classes[$name]['entity'][$key]['properties'][$propertyKey]['toMapping'] = $toMapping;
                     }
                 }
+
+                $classes[$name]['entity'][$key]['hash'] = sha1(serialize($classes[$name]['entity'][$key]));
             }
         }
 

@@ -16,6 +16,8 @@ final class IndexController extends AbstractController
 {
     public const VIEW = 'view';
     public const GET_MODULES = 'get_modules';
+    public const DEL_MODULES = 'del_modules';
+    public const DEL_ENTITY = 'del_entity';
     public const GET_ROLES = 'get_roles';
     public const ADD_ROLE = 'add_role';
     public const DEL_ROLE = 'del_role';
@@ -51,6 +53,27 @@ final class IndexController extends AbstractController
                     'modules' => $this->editorService->getModules(),
                 ]);
 
+            case self::DEL_MODULES:
+                $moduleName = ucfirst($request->get('module'));
+                $this->creatorService->deleteTableToByModule($moduleName);
+                $fullPathToEntity = $this->creatorService->getProjectDir().'/module/'.$moduleName;
+                $this->creatorService->getFilesystem()->remove($fullPathToEntity);
+                $this->creatorService->deleteDoctrineConfigure($moduleName);
+
+                return $this->json([
+                    'success' => true,
+                    'message' => 'Module is removed'
+                ]);
+            case self::DEL_ENTITY:
+                $version = ucfirst($request->get('version', 'V1'));
+                $moduleName = ucfirst($request->get('module'));
+                $entityName = ucfirst($request->get('entity'));
+                $this->creatorService->deleteEntity($entityName, $moduleName, $version);
+
+                return $this->json([
+                    'success' => true,
+                    'message' => 'Entity is removed'
+                ]);
             case self::GET_ROLES:
                 return $this->json([
                     'success' => true,
@@ -71,7 +94,7 @@ final class IndexController extends AbstractController
 
                     return $this->json([
                         'success' => true,
-                        'role' => $role->toArray('GET_EDITOR_ADD'),
+                        'role' => $role->toArray($role::TYPE_GET),
                     ]);
                 }
                 break;
@@ -110,14 +133,18 @@ final class IndexController extends AbstractController
                     'types' => $this->editorService->getTypes(),
                 ]);
             case self::SAVE:
-                $content = $request->getContent();
-                $decode = json_decode($content, JSON_OBJECT_AS_ARRAY);
-                $createdFiles = $this->creatorService->create($decode);
+                try {
+                    $content = $request->getContent();
+                    $decode = json_decode($content, JSON_OBJECT_AS_ARRAY);
+                    $createdFiles = $this->creatorService->create($decode);
 
-                return $this->json([
-                    'success' => true,
-                    'result' => $createdFiles,
-                ]);
+                    return $this->json([
+                        'success' => true,
+                        'files' => $createdFiles,
+                    ]);
+                } catch (\Throwable $e) {
+                    dd($e);
+                }
         }
 
         return $this->json([

@@ -77,7 +77,7 @@ class RolePostController extends BaseController
 
             $item = $service->toEntity($request->getContent());
             if (!$item instanceof BaseEntity) {
-               throw new UndefinedEntity(Role::class . ' or not extend BaseEntity', $id);
+               throw new UndefinedEntity(Role::class . ' or not extend BaseEntity');
             }
             $service->getEntityManager()->persist($item);
             $service->getEntityManager()->flush();

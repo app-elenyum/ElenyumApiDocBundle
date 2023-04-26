@@ -5,6 +5,7 @@ namespace Module\User\V1\Controller\Authentication;
 use DateTimeImmutable;
 use Elenyum\ApiDocBundle\Controller\BaseController;
 use Exception;
+use Elenyum\ApiDocBundle\Annotation\Model;
 use Module\User\V1\Entity\User;
 use Module\User\V1\Entity\Role;
 use Module\User\V1\Service\UserService;
@@ -99,14 +100,20 @@ class LoginController extends BaseController
             unset($item['salt'], $item['userIdentifier']);
 
             if (!empty($item['createdAt'])) {
-                $item['createdAt'] = DateTimeImmutable::createFromFormat('U', $item['createdAt']['timestamp'])->format(
-                    DATE_ATOM
-                );
+                $createdAt = DateTimeImmutable::createFromFormat('U', $item['createdAt']['timestamp']);
+                if ($createdAt instanceof DateTimeImmutable) {
+                    $item['createdAt'] = $createdAt->format(
+                        DATE_ATOM
+                    );
+                }
             }
             if (!empty($item['updatedAt'])) {
-                $item['updatedAt'] = DateTimeImmutable::createFromFormat('U', $item['updatedAt']['timestamp'])->format(
-                    DATE_ATOM
-                );
+                $updatedAt = DateTimeImmutable::createFromFormat('U', $item['updatedAt']['timestamp']);
+                if ($updatedAt instanceof DateTimeImmutable) {
+                    $item['updatedAt'] = $updatedAt->format(
+                        DATE_ATOM
+                    );
+                }
             }
 
             return $this->json([
