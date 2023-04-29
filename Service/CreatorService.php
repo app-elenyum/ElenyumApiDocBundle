@@ -52,22 +52,20 @@ class CreatorService
 
         foreach ($data as $oldModuleName => $moduleData) {
             $version = ucfirst($moduleData['version']);
-            if ($oldModuleName !== $moduleData['name']) {
-                $this->filesystem->rename(
-                    $modulePath.'/'.ucfirst($oldModuleName),
-                    $modulePath.'/'.ucfirst($moduleData['name'])
-                );
-                $this->deleteDoctrineConfigure($oldModuleName);
-            }
             $moduleName = $moduleData['name'];
             $fullPath = $modulePath.'/'.ucfirst($moduleName).'/'.$version;
             $moduleNamespace = 'Module\\'.ucfirst($moduleName).'\\'.$version;
+            $isDeleteModule = $oldModuleName !== $moduleData['name'];
+
+            if ($isDeleteModule) {
+                $this->deleteModule($oldModuleName);
+            }
 
             foreach ($moduleData['entity'] as $entity) {
                 if (isset($entity['hash'])) {
                     $hash = $entity['hash'];
                     unset($entity['hash']);
-                    if ($hash === sha1(serialize($entity))) {
+                    if ($isDeleteModule === false && $hash === sha1(serialize($entity))) {
                         continue;
                     }
                 }
@@ -78,8 +76,8 @@ class CreatorService
 
                 $fileIs = 'created';
 
-                if (isset($entity['oldClassName']) && $entity['class'] !== $entity['oldClassName']) {
-                    $this->deleteEntity($entity['oldClassName'], ucfirst($moduleName), $version);
+                if ($isDeleteModule === false && isset($entity['oldClassName']) && $entity['class'] !== $entity['oldClassName']) {
+                    $this->deleteEntity($entity['oldClassName'], $oldModuleName, $version);
                 }
                 if (file_exists($dirEntityFile)) {
                     $fileIs = 'updated';
@@ -103,8 +101,8 @@ class CreatorService
                     if (!empty($data['service'])) {
                         $createdStructure[$moduleName]['created'][] = $this->copyTemplateToModule(
                             'Service.php', $data['service'].'.php', $fullPath.'/Service',
-                            ['{%uModuleName%}', '{%lModuleName%}', '{%entityName%}'],
-                            [ucfirst($moduleName), lcfirst($moduleName), $entityName]
+                            ['{%uModuleName%}', '{%moduleName%}', '{%entityName%}'],
+                            [ucfirst($moduleName), $moduleName, $entityName]
                         );
                     }
 
@@ -153,7 +151,7 @@ class CreatorService
 
                 $this->addDoctrineConfigure($moduleName, $version);
 
-                $process = new Process(['php', 'bin/console', 'd:s:u', '-f', '--em='.lcfirst($moduleName)]);
+                $process = new Process(['php', 'bin/console', 'd:s:u', '-f', '--em='.$moduleName]);
                 $process->setWorkingDirectory($this->getProjectDir());
                 $process->setTimeout(3600);
                 $process->setIdleTimeout(60);
@@ -472,7 +470,7 @@ class CreatorService
 
         if (flock($file, LOCK_EX)) {
             $value = Yaml::parse(fread($file, filesize($configDir)));
-            $value['doctrine']['orm']['entity_managers'][lcfirst($moduleName)] = [
+            $value['doctrine']['orm']['entity_managers'][$moduleName] = [
                 "connection" => 'default',
                 "mappings" => [
                     ucfirst($moduleName) => [
@@ -496,7 +494,7 @@ class CreatorService
 
     public function deleteTableToByModule(string $module): void
     {
-        $em = $this->getEntityManager(lcfirst($module));
+        $em = $this->getEntityManager($module);
         $objects = $em->getMetadataFactory()->getAllMetadata();
 
         foreach ($objects as $entity) {
@@ -513,7 +511,7 @@ class CreatorService
 
         if (flock($file, LOCK_EX)) {
             $value = Yaml::parse(fread($file, filesize($configDir)));
-            unset($value['doctrine']['orm']['entity_managers'][lcfirst($moduleName)]);
+            unset($value['doctrine']['orm']['entity_managers'][$moduleName]);
             ftruncate($file, 0);
             rewind($file);
             fwrite($file, Yaml::dump($value, 10));
@@ -554,35 +552,40 @@ class CreatorService
     public function deleteEntity(string $entityName, string $moduleName, $version = 'V1'): bool
     {
         $fullPathToEntity = $this->getProjectDir().'/module/'.$moduleName.'/'.$version.'/Entity/'.$entityName.'.php';
-        $fullPathToGetController = $this->getProjectDir(
-            ).'/module/'.$moduleName.'/'.$version.'/Controller/'.$entityName.'GetController.php';
-        $fullPathToListController = $this->getProjectDir(
-            ).'/module/'.$moduleName.'/'.$version.'/Controller/'.$entityName.'ListController.php';
-        $fullPathToPostController = $this->getProjectDir(
-            ).'/module/'.$moduleName.'/'.$version.'/Controller/'.$entityName.'PostController.php';
-        $fullPathToPutController = $this->getProjectDir(
-            ).'/module/'.$moduleName.'/'.$version.'/Controller/'.$entityName.'PutController.php';
-        $fullPathToDeleteController = $this->getProjectDir(
-            ).'/module/'.$moduleName.'/'.$version.'/Controller/'.$entityName.'DeleteController.php';
+        $fullPathToRepository = $this->getProjectDir().'/module/'.$moduleName.'/'.$version.'/Repository/'.$entityName.'Repository.php';
+        $fullPathToService = $this->getProjectDir().'/module/'.$moduleName.'/'.$version.'/Service/'.$entityName.'Service.php';
+        $fullPathToGetController = $this->getProjectDir().'/module/'.$moduleName.'/'.$version.'/Controller/'.$entityName.'GetController.php';
+        $fullPathToListController = $this->getProjectDir().'/module/'.$moduleName.'/'.$version.'/Controller/'.$entityName.'ListController.php';
+        $fullPathToPostController = $this->getProjectDir().'/module/'.$moduleName.'/'.$version.'/Controller/'.$entityName.'PostController.php';
+        $fullPathToPutController = $this->getProjectDir().'/module/'.$moduleName.'/'.$version.'/Controller/'.$entityName.'PutController.php';
+        $fullPathToDeleteController = $this->getProjectDir().'/module/'.$moduleName.'/'.$version.'/Controller/'.$entityName.'DeleteController.php';
 
         $this->getFilesystem()->remove($fullPathToEntity);
+        $this->getFilesystem()->remove($fullPathToRepository);
+        $this->getFilesystem()->remove($fullPathToService);
         $this->getFilesystem()->remove($fullPathToGetController);
         $this->getFilesystem()->remove($fullPathToListController);
         $this->getFilesystem()->remove($fullPathToPostController);
         $this->getFilesystem()->remove($fullPathToPutController);
         $this->getFilesystem()->remove($fullPathToDeleteController);
 
-        $em = $this->getEntityManager(lcfirst($moduleName));
-        $sql = 'DROP TABLE '.mb_strtolower($entityName);
+        $this->getFilesystem()->dumpFile($this->getProjectDir().'/module/'.$moduleName.'/'.$version.'/Entity/'.'t.php', '');
+
+        $em = $this->getEntityManager($moduleName);
+        $sql = 'DROP TABLE IF EXISTS'.mb_strtolower($entityName);
         $connection = $em->getConnection();
         $stmt = $connection->prepare($sql);
         $stmt->execute();
 
-        $process = new Process(['php', 'bin/console', 'd:s:u', '-f', '--em='.mb_strtolower($moduleName)]);
-        $process->setWorkingDirectory($this->getProjectDir());
-        $process->setTimeout(3600);
-        $process->setIdleTimeout(60);
-        $process->start();
+        return true;
+    }
+
+    public function deleteModule(string $moduleName): bool
+    {
+        $this->deleteTableToByModule($moduleName);
+        $fullPathToEntity = $this->getProjectDir().'/module/'.$moduleName;
+        $this->getFilesystem()->remove($fullPathToEntity);
+        $this->deleteDoctrineConfigure($moduleName);
 
         return true;
     }

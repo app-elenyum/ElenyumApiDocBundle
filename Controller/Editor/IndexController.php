@@ -11,6 +11,7 @@ use Module\User\V1\Entity\Role;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Process\Process;
 
 final class IndexController extends AbstractController
 {
@@ -54,11 +55,8 @@ final class IndexController extends AbstractController
                 ]);
 
             case self::DEL_MODULES:
-                $moduleName = ucfirst($request->get('module'));
-                $this->creatorService->deleteTableToByModule($moduleName);
-                $fullPathToEntity = $this->creatorService->getProjectDir().'/module/'.$moduleName;
-                $this->creatorService->getFilesystem()->remove($fullPathToEntity);
-                $this->creatorService->deleteDoctrineConfigure($moduleName);
+                $moduleName = $request->get('module');
+                $this->creatorService->deleteModule($moduleName);
 
                 return $this->json([
                     'success' => true,
@@ -66,7 +64,7 @@ final class IndexController extends AbstractController
                 ]);
             case self::DEL_ENTITY:
                 $version = ucfirst($request->get('version', 'V1'));
-                $moduleName = ucfirst($request->get('module'));
+                $moduleName = $request->get('module');
                 $entityName = ucfirst($request->get('entity'));
                 $this->creatorService->deleteEntity($entityName, $moduleName, $version);
 
