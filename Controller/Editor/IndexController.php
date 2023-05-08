@@ -16,6 +16,7 @@ final class IndexController extends AbstractController
 {
     public const VIEW = 'view';
     public const GET_MODULES = 'get_modules';
+    public const ADD_MODULE = 'add_module';
     public const DEL_MODULES = 'del_modules';
     public const DEL_ENTITY = 'del_entity';
     public const GET_ROLES = 'get_roles';
@@ -53,26 +54,32 @@ final class IndexController extends AbstractController
                     'modules' => $this->editorService->getModules(),
                 ]);
 
-            case self::DEL_MODULES:
-                $moduleName = ucfirst($request->get('module'));
-                $this->creatorService->deleteTableToByModule($moduleName);
-                $fullPathToEntity = $this->creatorService->getProjectDir().'/module/'.$moduleName;
-                $this->creatorService->getFilesystem()->remove($fullPathToEntity);
-                $this->creatorService->deleteDoctrineConfigure($moduleName);
+            case self::ADD_MODULE:
+                $moduleName = $request->get('module');
+                $this->creatorService->createStructure($moduleName);
+                $this->creatorService->addDoctrineConfigure($moduleName);
 
                 return $this->json([
                     'success' => true,
-                    'message' => 'Module is removed'
+                    'message' => 'add module: '.$moduleName,
+                ]);
+            case self::DEL_MODULES:
+                $moduleName = $request->get('module');
+                $this->creatorService->deleteModule($moduleName);
+
+                return $this->json([
+                    'success' => true,
+                    'message' => 'Module is removed',
                 ]);
             case self::DEL_ENTITY:
                 $version = ucfirst($request->get('version', 'V1'));
-                $moduleName = ucfirst($request->get('module'));
+                $moduleName = $request->get('module');
                 $entityName = ucfirst($request->get('entity'));
                 $this->creatorService->deleteEntity($entityName, $moduleName, $version);
 
                 return $this->json([
                     'success' => true,
-                    'message' => 'Entity is removed'
+                    'message' => 'Entity is removed',
                 ]);
             case self::GET_ROLES:
                 return $this->json([
@@ -136,11 +143,12 @@ final class IndexController extends AbstractController
                 try {
                     $content = $request->getContent();
                     $decode = json_decode($content, JSON_OBJECT_AS_ARRAY);
-                    $createdFiles = $this->creatorService->create($decode);
+                    $created = $this->creatorService->create($decode);
 
                     return $this->json([
                         'success' => true,
-                        'files' => $createdFiles,
+                        'files' => $created['generatedFiles'],
+                        'sqls' => $created['sqls'],
                     ]);
                 } catch (\Throwable $e) {
                     dd($e);

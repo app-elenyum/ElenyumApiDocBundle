@@ -19,9 +19,9 @@ use Symfony\Component\Security\Core\User\UserInterface;
 interface AllowInterface
 {
     /**
-     * @param UserInterface $user
+     * @param UserInterface|null $user
      * @param string $type - 'GET', 'POST', 'PUT', 'DELETE'
      * @return bool
      */
-    public function isAllow(UserInterface $user, string $type): bool;
+    public function isAllow(?UserInterface $user, string $type): bool;
 }

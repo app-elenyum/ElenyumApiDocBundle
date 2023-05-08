@@ -2,6 +2,7 @@
 
 namespace Module\{%uModuleName%}\V1\Controller;
 
+use Elenyum\ApiDocBundle\Annotation\Access;
 use Elenyum\ApiDocBundle\Controller\BaseController;
 use Elenyum\ApiDocBundle\Validator\ValidationException;
 use Exception;
@@ -71,12 +72,11 @@ class {%entityName%}PostController extends BaseController
     final public function __invoke(Request $request, {%entityName%}Service $service): Response
     {
         try {
-            //Check access
-            $entity = $service->getEntityObject();
             $item = $service->toEntity($request->getContent());
-            $this->denyAccessUnlessGranted('POST', $item);
             if (!$item instanceof BaseEntity) {
                throw new UndefinedEntity({%entityName%}::class . ' or not extend BaseEntity');
+            } else {
+                $this->checkAccess($item, 'post');
             }
             $service->getEntityManager()->persist($item);
             $service->getEntityManager()->flush();

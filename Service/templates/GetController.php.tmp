@@ -48,9 +48,8 @@ class {%entityName%}GetController extends BaseController
 {
     final public function __invoke(int $id, {%entityName%}Service $service): Response
     {
-        //Check access
         $entity = $service->getEntityObject();
-        $this->denyAccessUnlessGranted('GET', $entity);
+        $this->checkAccess($entity, 'get');
 
         try {
             $repository = $service->getRepository();

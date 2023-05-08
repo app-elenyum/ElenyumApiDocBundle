@@ -84,11 +84,10 @@ class {%entityName%}ListController extends BaseController
 {
     final public function __invoke(Request $request, {%entityName%}Service $service): Response
     {
-        try {
-            //Check access
-            $entity = $service->getEntityObject();
-            $this->denyAccessUnlessGranted('GET', $entity);
+        $entity = $service->getEntityObject();
+        $this->checkAccess($entity, 'get');
 
+        try {
             $repository = $service->getRepository();
             if (!$repository instanceof PaginatorInterface) {
                 throw new Exception('Repository not implements PaginatorInterface');

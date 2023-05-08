@@ -7,9 +7,6 @@ use Doctrine\Persistence\ManagerRegistry;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use Symfony\Component\Serializer\Encoder\JsonEncoder;
-use Symfony\Component\Serializer\Normalizer\GetSetMethodNormalizer;
-use Symfony\Component\Serializer\Serializer;
 use Symfony\Contracts\Service\Attribute\Required;
 
 class Config implements ConfigInterface

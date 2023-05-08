@@ -70,8 +70,7 @@ class {%entityName%}DeleteController extends BaseController
             $deletedItems = [];
             foreach ($items as $item) {
                 if ($item instanceof BaseEntity) {
-                    //Check access
-                    $this->denyAccessUnlessGranted('DELETE', $item);
+                    $this->checkAccess($item, 'delete');
                     $deletedItems[] = $item->toArray('DEL_RES');
                     $service->getEntityManager()->remove($item);
                 } else {

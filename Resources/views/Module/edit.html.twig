@@ -500,9 +500,13 @@
                         <!--  Если выбран модуль   -->
                         <div class="ad-item" :hidden="selected != 'module'">
                         <span class="p-float-label">
-                            <p-inputtext id="ad-module-text-name" class="ad-text" type="text"
-                                         v-model="moduleEdit.name"></p-inputtext>
-                            <label for="ad-text-name">Module name</label>
+                            <div class="flex flex-column gap-2">
+                                <span class="p-float-label">
+                                    <p-inputtext id="ad-module-text-name" class="ad-text" v-model="moduleEdit.name" type="text" aria-describedby="text-error" />
+                                    <label for="value">Module name</label>
+                                </span>
+                                <p-button type="button" icon="pi pi-check" label="Add" @click="onAddModule(moduleEdit.name)"/>
+                            </div>
                         </span>
                         </div>
                     </template>
@@ -764,6 +768,14 @@
                 });
             },
 
+            onAddModule(moduleName) {
+                this.blockedApp = true;
+                this.addModule(moduleName).then((result) => {
+                    this.blockedApp = false;
+                    this.save(this.modules);
+                });
+            },
+
             async getRoles() {
                 axios
                     .get('/elenyum/edit?r=get_roles')
@@ -807,6 +819,10 @@
                 return axios
                     .post('/elenyum/edit?r=save', data);
                 // .then(response => (this.modules = Object.assign({}, response.data.modules)));
+            },
+            async addModule(module) {
+                return axios
+                    .post('/elenyum/edit?r=add_module&module=' + module);
             }
         },
         computed: {
@@ -966,7 +982,7 @@
                                     let moduleName = localStorage.moduleName;
                                     let count = this.modules[moduleName]['entity'].length + 1;
                                     let newEntity = {
-                                        class: 'NewClass_' + count,
+                                        class: 'Entity_' + moduleName + '' + count,
                                         roles: {
                                             GET: [],
                                             POST: [],
@@ -1034,9 +1050,9 @@
                                         ]
                                     };
 
-                                    this.moduleEdit = this.modules[moduleName];
-                                    this.selected = 'module';
-                                    this.onSave()
+                                    // this.moduleEdit = this.modules[moduleName];
+                                    // this.selected = 'module';
+                                    // this.onAddModule(moduleName);
                                 }
                             },
                             {
