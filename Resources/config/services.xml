@@ -19,10 +19,14 @@
         <service id="Elenyum\ApiDocBundle\Service\EditorService" class="Elenyum\ApiDocBundle\Service\EditorService" public="true">
             <argument type="service" id="doctrine"/>
         </service>
+        <service id="Elenyum\ApiDocBundle\Util\Editor\Entity\CreateEntity" class="Elenyum\ApiDocBundle\Util\Editor\Entity\CreateEntity" public="true">
+        </service>
         <service id="Elenyum\ApiDocBundle\Service\CreatorService" class="Elenyum\ApiDocBundle\Service\CreatorService"
                  public="true">
             <argument type="service" id="filesystem"/>
             <argument type="service" id="App\Kernel"/>
+            <argument type="service" id="Doctrine\Common\Persistence\ManagerRegistry"/>
+            <argument type="service" id="Elenyum\ApiDocBundle\Util\Editor\Entity\CreateEntity"/>
         </service>
         <service id="elenyum_api_doc.module.init" class="Elenyum\ApiDocBundle\Command\Maker\Command\InitModule"
                  public="true">
