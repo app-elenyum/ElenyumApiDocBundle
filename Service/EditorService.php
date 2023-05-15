@@ -12,7 +12,6 @@ use Elenyum\ApiDocBundle\Annotation\Access;
 use Elenyum\ApiDocBundle\Annotation\NotEditable;
 use Elenyum\ApiDocBundle\Entity\BaseEntity;
 use Symfony\Component\Serializer\Annotation\Groups;
-use ReflectionClass;
 use Symfony\Component\Validator\Constraints\Count;
 use Symfony\Component\Validator\Constraints\Email;
 use Symfony\Component\Validator\Constraints\Length;
@@ -85,7 +84,7 @@ class EditorService
                     $toMapping = [];
                     if (!empty($manyToOne)) {
                         /** @var ManyToOne $manyToOneNewInstance */
-                        $manyToOneNewInstance = $oneToOne->newInstance();
+                        $manyToOneNewInstance = $manyToOne->newInstance();
                         $targetEntityArray = explode(
                             '\\',
                             $manyToOneNewInstance->targetEntity
@@ -177,35 +176,6 @@ class EditorService
         }
 
         return $classes;
-    }
-
-    /**
-     * @return array
-     */
-    public function getTypes(): array
-    {
-        $manyToOne = new ReflectionClass(ManyToOne::class);
-        $oneToOne = new ReflectionClass(OneToOne::class);
-        $oneToMany = new ReflectionClass(OneToMany::class);
-        $manyToMany = new ReflectionClass(ManyToMany::class);
-
-        $types = [
-            '\\'.$manyToOne->getName() => $manyToOne->getShortName(),
-            '\\'.$oneToOne->getName() => $oneToOne->getShortName(),
-            '\\'.$oneToMany->getName() => $oneToMany->getShortName(),
-            '\\'.$manyToMany->getName() => $manyToMany->getShortName(),
-        ];
-
-        $oClass = new ReflectionClass(\Doctrine\DBAL\Types\Types::class);
-        $simpleTypes = $oClass->getConstants();
-
-        foreach ($simpleTypes as $simpleTypeKey => $simpleTypeValue) {
-            $simpleTypes['\\'.\Doctrine\DBAL\Types\Types::class.'::'.$simpleTypeKey] = $simpleTypeValue;
-
-            unset($simpleTypes[$simpleTypeKey]);
-        }
-
-        return array_merge($types, $simpleTypes);
     }
 
     public function getGroups(): array

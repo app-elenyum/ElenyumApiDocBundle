@@ -6,6 +6,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Elenyum\ApiDocBundle\Render\Html\AssetsMode;
 use Elenyum\ApiDocBundle\Service\CreatorService;
 use Elenyum\ApiDocBundle\Service\EditorService;
+use Elenyum\ApiDocBundle\Util\Editor\Types;
 use Elenyum\ApiDocBundle\Util\Slugify;
 use Module\User\V1\Entity\Role;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -61,7 +62,7 @@ final class IndexController extends AbstractController
 
                 return $this->json([
                     'success' => true,
-                    'message' => 'add module: '.$moduleName,
+                    'message' => 'Added module: '.$moduleName,
                 ]);
             case self::DEL_MODULES:
                 $moduleName = $request->get('module');
@@ -137,7 +138,7 @@ final class IndexController extends AbstractController
                 //Возвращаем типы данных
                 return $this->json([
                     'success' => true,
-                    'types' => $this->editorService->getTypes(),
+                    'types' => Types::getAll(),
                 ]);
             case self::SAVE:
                 try {

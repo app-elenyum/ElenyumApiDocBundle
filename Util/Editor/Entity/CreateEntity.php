@@ -4,6 +4,7 @@ namespace Elenyum\ApiDocBundle\Util\Editor\Entity;
 
 use DateTimeImmutable;
 use Elenyum\ApiDocBundle\Annotation\Access;
+use Elenyum\ApiDocBundle\Util\Editor\Types;
 use Exception;
 use Nette\PhpGenerator\ClassType;
 use Nette\PhpGenerator\PhpNamespace;
@@ -18,21 +19,6 @@ class CreateEntity
     private ?PhpNamespace $namespace = null;
     private array $groups = [];
 
-    const TYPES = [
-        'id' => 'id',
-        'string' => 'string',
-        'guid' => 'string',
-        'text' => 'string',
-        'integer' => 'int',
-        'float' => 'float',
-        'boolean' => 'bool',
-        'date' => \DateTimeImmutable::class,
-        'time' => \DateTimeImmutable::class,
-        'datetime' => \DateTimeImmutable::class,
-        'object' => 'array',
-        'array' => 'array',
-    ];
-
     const VALIDATORS = [
         'notNull' => NotNull::class,
         'length' => Length::class,
@@ -42,7 +28,7 @@ class CreateEntity
 
     private function propertyTypeToTypePhp(string $type): ?string
     {
-        return self::TYPES[$type];
+        return Types::getAll()[$type];
     }
 
     private function getValidatorByName(string $name): string
@@ -95,9 +81,6 @@ class CreateEntity
             case 'ManyToMany':
                 $prop = [];
 
-                if (!empty($propertyData['column']['mappedBy'])) {
-                    $prop['mappedBy'] = $propertyData['column']['mappedBy'];
-                }
                 if (!empty($propertyData['column']['targetEntity'])) {
                     $prop['targetEntity'] = $this->namespace->getName().'\\'.$propertyData['column']['targetEntity'];
                 }
@@ -154,9 +137,9 @@ class CreateEntity
                 $this->createSetter($classType, $property);
                 $this->createGetter($classType, $property);
                 break;
-            case 'date':
-            case 'time':
-            case 'datetime':
+            case 'date_immutable':
+            case 'time_immutable':
+            case 'datetime_immutable':
                 $this->namespace->addUse('DateTimeImmutable');
                 $property->addAttribute('ORM\Column', $propertyData['column']);
                 $property->setType($this->propertyTypeToTypePhp($columnType));

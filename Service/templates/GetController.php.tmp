@@ -41,6 +41,12 @@ use OpenApi\Attributes as OA;
         ]
     )
 )]
+#[OA\Parameter(
+    name: 'field',
+    in: 'query',
+    schema: new OA\Schema(type: 'string'),
+    example: 'id,title'
+)]
 #[Security(name: null)]
 #[OA\Tag(name: '{%uModuleName%}')]
 #[Route(path: '/{%version%}/{%lModuleName%}/{%lEntityName%}/{id<\d+>}', name: '{%lModuleName%}{%entityName%}Get', methods: Request::METHOD_GET)]

@@ -2,6 +2,10 @@
 
 namespace Elenyum\ApiDocBundle\Normalizer;
 
+use Doctrine\ORM\Mapping\ManyToMany;
+use Doctrine\ORM\Mapping\ManyToOne;
+use Doctrine\ORM\Mapping\OneToMany;
+use Doctrine\ORM\Mapping\OneToOne;
 use Elenyum\ApiDocBundle\Service\BaseServiceInterface;
 use ReflectionProperty;
 use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
@@ -147,6 +151,7 @@ class ElenyumNormalizer extends AbstractObjectNormalizer
             self::$setterAccessibleCache[$key] = method_exists($object, $setter) && \is_callable([$object, $setter]) && !(new \ReflectionMethod($object, $setter))->isStatic();
         }
 
+        //(new \ReflectionMethod($object, $setter))->getParameters()[0]->getType()->getName()
         if (self::$setterAccessibleCache[$key]) {
             $object->$setter($value);
         }
@@ -162,23 +167,22 @@ class ElenyumNormalizer extends AbstractObjectNormalizer
     private function findTargetValue(object $object, string $attribute, mixed $value): mixed
     {
         $getManyAttribute = array_filter([
-            (new ReflectionProperty($object, $attribute))->getAttributes(\Doctrine\ORM\Mapping\ManyToMany::class)[0] ?? null,
-            (new ReflectionProperty($object, $attribute))->getAttributes(\Doctrine\ORM\Mapping\ManyToOne::class)[0] ?? null,
-            (new ReflectionProperty($object, $attribute))->getAttributes(\Doctrine\ORM\Mapping\OneToMany::class)[0] ?? null,
-            (new ReflectionProperty($object, $attribute))->getAttributes(\Doctrine\ORM\Mapping\OneToOne::class)[0] ?? null,
+            (new ReflectionProperty($object, $attribute))->getAttributes(ManyToMany::class)[0] ?? null,
+            (new ReflectionProperty($object, $attribute))->getAttributes(ManyToOne::class)[0] ?? null,
+            (new ReflectionProperty($object, $attribute))->getAttributes(OneToMany::class)[0] ?? null,
+            (new ReflectionProperty($object, $attribute))->getAttributes(OneToOne::class)[0] ?? null,
         ]);
 
         //Если есть признак что связано с другой сущностью то получаем все id и находим все связанные сущности
         if (!empty($getManyAttribute) && !empty($this->getService())) {
-            $attr = $getManyAttribute[0];
-            if(is_array($value)) {
-                $ids = array_column($value, 'id');
-            } else {
-                $ids = $value;
-            }
+            $attr = current($getManyAttribute);
+            $ids = $value;
             $target = $attr->getArguments()['targetEntity'];
             if (!empty($target)) {
                 $value = $this->getService()->getEntityManager()->getRepository($target)->findBy(['id' => $ids]);
+            }
+            if ($attr->getName() === ManyToOne::class) {
+                $value = current($value);
             }
         }
 

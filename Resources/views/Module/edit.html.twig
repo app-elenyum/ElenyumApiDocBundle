@@ -215,7 +215,7 @@
 
                             </template>
                             <template
-                                    v-if="columnEdit.column.type === 'ManyToMany' || columnEdit.column.type === 'OneToOne' || columnEdit.column.type === 'OneToMany' ">
+                                    v-if="columnEdit.column.type === 'OneToOne' || columnEdit.column.type === 'OneToMany' ">
                             <span class="p-float-label">
                                 <p-dropdown id="ad-dropdown-mapped-by" class="ad-dropdown"
                                             v-model="columnEdit.column.mappedBy"
@@ -502,10 +502,12 @@
                         <span class="p-float-label">
                             <div class="flex flex-column gap-2">
                                 <span class="p-float-label">
-                                    <p-inputtext id="ad-module-text-name" class="ad-text" v-model="moduleEdit.name" type="text" aria-describedby="text-error" />
+                                    <p-inputtext id="ad-module-text-name" class="ad-text" v-model="moduleEdit.name"
+                                                 type="text" aria-describedby="text-error"/>
                                     <label for="value">Module name</label>
                                 </span>
-                                <p-button type="button" icon="pi pi-check" label="Add" @click="onAddModule(moduleEdit.name)"/>
+                                <p-button type="button" icon="pi pi-check" label="Add"
+                                          @click="onAddModule(moduleEdit.name)"/>
                             </div>
                         </span>
                         </div>
@@ -634,6 +636,7 @@
             this.getRoles()
             this.getModules()
             this.getGroups()
+            this.getTypes()
         },
         methods: {
             changeColumnType(e, columnEdit) {
@@ -794,7 +797,9 @@
             async getTypes() {
                 axios
                     .get('/elenyum/edit?r=get_types')
-                    .then(response => (this.roles = response.data.roles));
+                    .then(response => {
+                        this.types = Object.keys(response.data.types)
+                    });
             },
             async getModules() {
                 axios
@@ -934,18 +939,8 @@
             return {
                 blockedApp: false,
                 inputRole: null,
-                roles: [
-                    // {
-                    //     id: 1,
-                    //     name: 'Администратор',
-                    //     systemName: 'ROLE_ADMIN'
-                    // },
-                    // {
-                    //     id: 2,
-                    //     name: 'Менеджер',
-                    //     systemName: 'ROLE_MANAGER'
-                    // },
-                ],
+                roles: [],
+                types: [],
                 showRoleDialog: false,
                 moduleItems: [
                     {
@@ -1142,138 +1137,7 @@
                 ],
                 selected: '',
                 result: {},
-                modules: {
-                    // "Content": {
-                    //     "name": "Content",
-                    //     "version": "V1",
-                    //     "entity": [
-                    //         {
-                    //             "class": "News",
-                    //             "oldClassName": null,
-                    //             "roles": {
-                    //                 "GET": [],
-                    //                 "POST": [],
-                    //                 "PUT": [],
-                    //                 "DELETE": []
-                    //             },
-                    //             "properties": [
-                    //                 {
-                    //                     "name": "id",
-                    //                     "column": {
-                    //                         "type": "id",
-                    //                         "nullable": false
-                    //                     },
-                    //                     "group": [
-                    //                         "GET",
-                    //                         "LIST",
-                    //                         "POST_RES",
-                    //                         "POST_REQ",
-                    //                         "PUT_RES",
-                    //                         "PUT_REQ",
-                    //                         "DEL_RES"
-                    //                     ],
-                    //                     "validator": {
-                    //                         "NotNull": {}
-                    //                     }
-                    //                 },
-                    //                 {
-                    //                     "name": "title",
-                    //                     "column": {
-                    //                         "type": "string",
-                    //                         "nullable": true
-                    //                     },
-                    //                     "group": [
-                    //                         "GET",
-                    //                         "LIST",
-                    //                         "POST_RES",
-                    //                         "POST_REQ",
-                    //                         "PUT_RES",
-                    //                         "PUT_REQ",
-                    //                         "DEL_RES"
-                    //                     ],
-                    //                     "validator": {}
-                    //                 },
-                    //                 {
-                    //                     "name": "desc",
-                    //                     "column": {
-                    //                         "type": "text",
-                    //                         "nullable": true
-                    //                     },
-                    //                     "group": [
-                    //                         "GET",
-                    //                         "LIST",
-                    //                         "POST_RES",
-                    //                         "POST_REQ",
-                    //                         "PUT_RES",
-                    //                         "PUT_REQ",
-                    //                         "DEL_RES"
-                    //                     ],
-                    //                     "validator": {}
-                    //                 },
-                    //                 {
-                    //                     "name": "category",
-                    //                     "column": {
-                    //                         "type": "ManyToOne",
-                    //                         "nullable": true,
-                    //                         "targetEntity": "Category"
-                    //                     },
-                    //                     "group": [
-                    //                         "GET",
-                    //                         "LIST",
-                    //                         "POST_RES",
-                    //                         "POST_REQ",
-                    //                         "PUT_RES",
-                    //                         "PUT_REQ",
-                    //                         "DEL_RES"
-                    //                     ],
-                    //                     "validator": {}
-                    //                 }
-                    //             ]
-                    //         },
-                    //         {
-                    //             "class": "Category",
-                    //             "roles": {
-                    //                 "GET": [],
-                    //                 "POST": [],
-                    //                 "PUT": [],
-                    //                 "DELETE": []
-                    //             },
-                    //             "properties": [
-                    //                 {
-                    //                     "name": "id",
-                    //                     "column": {
-                    //                         "type": "id",
-                    //                         "nullable": false
-                    //                     },
-                    //                     "group": [
-                    //                         "POST_RES",
-                    //                         "GET",
-                    //                         "LIST"
-                    //                     ],
-                    //                     "validator": {}
-                    //                 },
-                    //                 {
-                    //                     "name": "name",
-                    //                     "column": {
-                    //                         "type": "string",
-                    //                         "nullable": true
-                    //                     },
-                    //                     "group": [
-                    //                         "GET",
-                    //                         "LIST",
-                    //                         "POST_RES",
-                    //                         "POST_REQ",
-                    //                         "PUT_RES",
-                    //                         "PUT_REQ",
-                    //                         "DEL_RES"
-                    //                     ],
-                    //                     "validator": {}
-                    //                 }
-                    //             ]
-                    //         }
-                    //     ]
-                    // }
-                },
+                modules: {},
                 groups: [
                     'GET',
                     'LIST',
@@ -1305,26 +1169,7 @@
                     name: '',
                     version: ''
                 },
-                types: [
-                    'id',
-                    'binary',
-                    'blob',
-                    'boolean',
-                    'date',
-                    'time',
-                    'datetime',
-                    'decimal',
-                    'float',
-                    'guid',
-                    'integer',
-                    'json',
-                    'string',
-                    'text',
-                    'ManyToMany',
-                    'ManyToOne',
-                    'OneToOne',
-                    // 'OneToMany'
-                ]
+
             }
         },
         components: {

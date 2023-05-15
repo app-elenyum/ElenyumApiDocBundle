@@ -13,6 +13,7 @@ use Traversable;
 
 class Paginator
 {
+    public const DELIMITER = '___';
     public const PAGE_SIZE = 10;
     private DoctrineQueryBuilder $queryBuilder;
     private int $currentPage;
@@ -27,6 +28,24 @@ class Paginator
     public function __construct(DoctrineQueryBuilder $queryBuilder)
     {
         $this->queryBuilder = $queryBuilder;
+    }
+
+    public static function transformArray($array): array
+    {
+        $newArray = array();
+        foreach ($array as $key => $value) {
+            $parts = explode(self::DELIMITER, $key);
+            $subArray =& $newArray;
+            foreach ($parts as $part) {
+                if (!isset($subArray[$part])) {
+                    $subArray[$part] = array();
+                }
+                $subArray =& $subArray[$part];
+            }
+            $subArray = $value;
+        }
+
+        return $newArray;
     }
 
     /**
@@ -56,7 +75,11 @@ class Paginator
         $useOutputWalkers = \count($this->queryBuilder->getDQLPart('having') ?: []) > 0;
         $paginator->setUseOutputWalkers($useOutputWalkers);
 
-        $this->results = $paginator->getIterator();
+        $result = [];
+        foreach ($paginator->getIterator() as $item) {
+            $result[] = self::transformArray($item);
+        }
+        $this->results = new ArrayIterator($result);
         $this->numResults = $paginator->count();
 
         return $this;

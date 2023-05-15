@@ -3,6 +3,8 @@
 namespace Elenyum\ApiDocBundle\Util;
 
 use Doctrine\ORM\QueryBuilder;
+use Elenyum\ApiDocBundle\Entity\BaseEntity;
+use Elenyum\ApiDocBundle\Repository\BaseRepository;
 use ReflectionProperty;
 
 class PrepareQueryParams
@@ -44,22 +46,40 @@ class PrepareQueryParams
     }
 
     /**
-     * @throws \ReflectionException
+     * @param array $fields
+     * @return void
      */
     public function select(array $fields = []): void
     {
+        /** $fields - тут должны приходить все поля через точку которые нужно запрашивать */
         if (empty($fields)) {
             return;
         }
 
         $select = [];
         foreach ($fields as $item) {
-            /** ReflectionException if not define fields */
-            new ReflectionProperty($this->entityName, $item);
+            $strToNestedArray = explode('.', $item);
+            // Если текущий ключ пустой значит нет вложенных
+            if (count($strToNestedArray) === 1) {
+                $select[] = $this->alias.'.'.$item;
 
-            $select[] = $this->alias.'.'.$item;
-            $this->qb->select($select);
+            } else {
+                $split = $strToNestedArray;
+                foreach (array_slice($split, 0, -1) as $keyElement => $element) {
+                    if (!in_array($element, $this->qb->getAllAliases())) {
+                        $parent = $keyElement === 0 ? $this->alias : $strToNestedArray[$keyElement - 1];
+                        $this->qb->leftJoin($parent.'.'.$element, $element);
+                    }
+                }
+                $splitForLastTwoElement = $strToNestedArray;
+                $lastTwoElements = array_splice($splitForLastTwoElement, -2);
+                $implodeKey = implode('.', $lastTwoElements);
+                $select[] = sprintf('%1$s as %2$s', $implodeKey, implode(Paginator::DELIMITER, $strToNestedArray));
+            }
         }
+
+
+        $this->qb->select($select);
     }
 
     /**

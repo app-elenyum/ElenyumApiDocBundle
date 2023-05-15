@@ -4,5 +4,5 @@ namespace Elenyum\ApiDocBundle\Repository;
 
 interface GetItemInterface
 {
-    public function getItem(int $id): ?object;
+    public function getItem(int $id, array $fields = []): ?array;
 }
