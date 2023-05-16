@@ -62,16 +62,13 @@ class {%entityName%}GetController extends BaseController
             if (!$repository instanceof GetItemInterface) {
                 throw new Exception('Repository not implements GetItemInterface');
             }
-            $entity = $repository->getItem($id);
-
-            if (!$entity instanceof BaseEntity) {
-               throw new UndefinedEntity({%entityName%}::class . ' or not extend BaseEntity', $id);
-            }
+            $field = empty($request->query->get('field')) ? [] : explode(',', $request->query->get('field'));
+            $data = $repository->getItem($id, $field);
 
             return $this->json([
                 'success' => true,
                 'code' => Response::HTTP_OK,
-                'item' => $entity->toArray('GET'),
+                'item' => Paginator::transformArray($data),
             ]);
         } catch (Exception $e) {
             return $this->json([

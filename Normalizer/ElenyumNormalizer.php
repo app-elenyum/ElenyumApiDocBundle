@@ -2,6 +2,7 @@
 
 namespace Elenyum\ApiDocBundle\Normalizer;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping\ManyToMany;
 use Doctrine\ORM\Mapping\ManyToOne;
 use Doctrine\ORM\Mapping\OneToMany;
@@ -183,6 +184,9 @@ class ElenyumNormalizer extends AbstractObjectNormalizer
             }
             if ($attr->getName() === ManyToOne::class) {
                 $value = current($value);
+            }
+            if ($attr->getName() === ManyToMany::class) {
+                return new ArrayCollection($value);
             }
         }
 

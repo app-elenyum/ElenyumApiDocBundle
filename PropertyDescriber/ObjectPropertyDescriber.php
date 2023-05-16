@@ -21,7 +21,7 @@ class ObjectPropertyDescriber implements PropertyDescriberInterface, ModelRegist
 {
     use ModelRegistryAwareTrait;
 
-    public function describe(array $types, OA\Schema $property, array $groups = null)
+    public function describeObject(array $types, OA\Schema $property, array $groups = null)
     {
         $type = new Type(
             $types[0]->getBuiltinType(),
@@ -43,6 +43,20 @@ class ObjectPropertyDescriber implements PropertyDescriberInterface, ModelRegist
         }
 
         $property->ref = $this->modelRegistry->register(new Model($type, $groups));
+    }
+
+    public function describe(array $types, OA\Schema $property, array $groups = null)
+    {
+        $groupTypes = array_map(function($item) {
+            return explode("_", $item)[0];
+        }, $groups);
+
+        if (array_intersect(['POST', 'PUT'], $groupTypes)) {
+            $property->example = '1';
+            $property->description = 'enter id to parent entity for added';
+        } else {
+            $this->describeObject($types, $property, $groups);
+        }
     }
 
     public function supports(array $types): bool
