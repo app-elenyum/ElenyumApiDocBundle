@@ -48,7 +48,7 @@ class ObjectPropertyDescriber implements PropertyDescriberInterface, ModelRegist
     public function describe(array $types, OA\Schema $property, array $groups = null)
     {
         $groupTypes = array_map(function($item) {
-            return explode("_", $item)[0];
+            return mb_strtoupper(explode("_", $item)[0]);
         }, $groups);
 
         if (array_intersect(['POST', 'PUT'], $groupTypes)) {

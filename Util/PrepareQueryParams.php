@@ -57,6 +57,7 @@ class PrepareQueryParams
         }
 
         $select = [];
+        $select[] =  $this->alias.'.id as orderId';
         foreach ($fields as $item) {
             $strToNestedArray = explode('.', $item);
             // Если текущий ключ пустой значит нет вложенных
@@ -65,7 +66,8 @@ class PrepareQueryParams
 
             } else {
                 $split = $strToNestedArray;
-                foreach (array_slice($split, 0, -1) as $keyElement => $element) {
+                $withoudEndKey = array_slice($split, 0, -1);
+                foreach ($withoudEndKey as $keyElement => $element) {
                     if (!in_array($element, $this->qb->getAllAliases())) {
                         $parent = $keyElement === 0 ? $this->alias : $strToNestedArray[$keyElement - 1];
                         $this->qb->leftJoin($parent.'.'.$element, $element);
@@ -74,10 +76,14 @@ class PrepareQueryParams
                 $splitForLastTwoElement = $strToNestedArray;
                 $lastTwoElements = array_splice($splitForLastTwoElement, -2);
                 $implodeKey = implode('.', $lastTwoElements);
+
+                $orderIdKey = sprintf('%1$s.id as %2$s', current($lastTwoElements), implode(Paginator::DELIMITER,$withoudEndKey) . Paginator::DELIMITER . 'orderId');
+                if (empty(array_search($orderIdKey, $select))) {
+                    $select[] = $orderIdKey;
+                }
                 $select[] = sprintf('%1$s as %2$s', $implodeKey, implode(Paginator::DELIMITER, $strToNestedArray));
             }
         }
-
 
         $this->qb->select($select);
     }

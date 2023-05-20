@@ -5,8 +5,6 @@ namespace Module\{%uModuleName%}\V1\Controller;
 use Elenyum\ApiDocBundle\Controller\BaseController;
 use Elenyum\ApiDocBundle\Repository\GetItemInterface;
 use Exception;
-use Elenyum\ApiDocBundle\Exception\UndefinedEntity;
-use Elenyum\ApiDocBundle\Entity\BaseEntity;
 use Module\{%uModuleName%}\V1\Entity\{%entityName%};
 use Module\{%uModuleName%}\V1\Service\{%entityName%}Service;
 use Elenyum\ApiDocBundle\Annotation\Model;
@@ -15,6 +13,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Elenyum\ApiDocBundle\Annotation\Security;
 use OpenApi\Attributes as OA;
+use Elenyum\ApiDocBundle\Util\Paginator;
 
 #[OA\Response(
     response: 200,
@@ -52,7 +51,7 @@ use OpenApi\Attributes as OA;
 #[Route(path: '/{%version%}/{%lModuleName%}/{%lEntityName%}/{id<\d+>}', name: '{%lModuleName%}{%entityName%}Get', methods: Request::METHOD_GET)]
 class {%entityName%}GetController extends BaseController
 {
-    final public function __invoke(int $id, {%entityName%}Service $service): Response
+    final public function __invoke(int $id, {%entityName%}Service $service, Request $request): Response
     {
         $entity = $service->getEntityObject();
         $this->checkAccess($entity, 'get');

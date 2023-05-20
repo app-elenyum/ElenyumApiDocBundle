@@ -34,6 +34,10 @@ class Paginator
     {
         $newArray = array();
         foreach ($array as $key => $value) {
+            if (is_int($key)) {
+                $newArray[] = self::transformArray($value);
+                continue;
+            }
             $parts = explode(self::DELIMITER, $key);
             $subArray =& $newArray;
             foreach ($parts as $part) {
@@ -46,6 +50,11 @@ class Paginator
         }
 
         return $newArray;
+    }
+
+    public static function prepareData($array): array
+    {
+        return self::transformArray($array);
     }
 
     /**
@@ -75,10 +84,10 @@ class Paginator
         $useOutputWalkers = \count($this->queryBuilder->getDQLPart('having') ?: []) > 0;
         $paginator->setUseOutputWalkers($useOutputWalkers);
 
-        $result = [];
-        foreach ($paginator->getIterator() as $item) {
-            $result[] = self::transformArray($item);
-        }
+//        $result = [];
+//        foreach ($paginator->getIterator() as $item) {
+            $result = self::prepareData($paginator->getIterator());
+//        }
         $this->results = new ArrayIterator($result);
         $this->numResults = $paginator->count();
 

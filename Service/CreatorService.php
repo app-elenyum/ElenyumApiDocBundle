@@ -266,13 +266,10 @@ class CreatorService
     public function deleteTableToByModule(string $module): void
     {
         $em = $this->getEntityManager($module);
-        $objects = $em->getMetadataFactory()->getAllMetadata();
+        $metadatas = $em->getMetadataFactory()->getAllMetadata();
+        $schemaTool = new SchemaTool($em);
 
-        foreach ($objects as $entity) {
-            $connection = $em->getConnection();
-            $stmt = $connection->prepare('DROP TABLE IF EXISTS '.$entity->table['name']);
-            $stmt->execute();
-        }
+        $schemaTool->dropSchema($metadatas);
     }
 
     public function deleteDoctrineConfigure(string $moduleName, string $version = 'V1'): void

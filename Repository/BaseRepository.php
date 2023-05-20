@@ -2,6 +2,11 @@
 
 namespace Elenyum\ApiDocBundle\Repository;
 
+use Doctrine\Common\Collections\Collection;
+use Doctrine\ORM\Mapping\ManyToMany;
+use Doctrine\ORM\Mapping\ManyToOne;
+use Doctrine\ORM\Mapping\OneToMany;
+use Doctrine\ORM\Mapping\OneToOne;
 use Doctrine\ORM\NonUniqueResultException;
 use Elenyum\ApiDocBundle\Entity\BaseEntity;
 use Elenyum\ApiDocBundle\Util\Paginator;
@@ -10,6 +15,7 @@ use Elenyum\ApiDocBundle\Util\RestParamsInterface;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
 use Exception;
+use ReflectionAttribute;
 use ReflectionClass;
 use Symfony\Component\Serializer\Annotation\Groups;
 
@@ -39,18 +45,31 @@ abstract class BaseRepository
         $result = [];
         foreach ($reflectionClass->getProperties() as $property) {
             $group = $property->getAttributes(Groups::class);
-            if (!is_subclass_of($property->getType()->getName(), BaseEntity::class) &&
+
+            $attributes = array_filter([
+                current($property->getAttributes(ManyToMany::class)),
+                current($property->getAttributes(OneToMany::class)),
+                current($property->getAttributes(ManyToOne::class)),
+                current($property->getAttributes(OneToOne::class)),
+            ], function ($item) {
+                return !empty($item);
+            });
+
+            if (empty($attributes) &&
                 end($group) !== false &&
                 in_array($name, current(end($group)?->getArguments()))
             ) {
                 $result[] = $property->getName();
             }
-            if (class_exists($property->getType()->getName()) && is_subclass_of($property->getType()->getName(),
-                    BaseEntity::class
-                )) {
+
+            if (!empty($attributes)) {
+                /** @var ReflectionAttribute $attribute */
+                $attribute = current($attributes);
 
                 /** @var BaseRepository $repository */
-                $repository = $this->getQueryBuilder()->getEntityManager()->getRepository($property->getType()->getName());
+                $repository = $this->getQueryBuilder()->getEntityManager()->getRepository(
+                    $attribute->getArguments()['targetEntity']
+                );
                 foreach ($repository->getPropertyByGroup($name) as $item) {
                     $result[] = $property->getName().'.'.$item;
                 }
@@ -94,7 +113,6 @@ abstract class BaseRepository
     }
 
     /**
-     * @throws NonUniqueResultException
      * @throws \ReflectionException
      */
     public function getItemsWithFields(int $id, array $fields = []): array
@@ -102,6 +120,7 @@ abstract class BaseRepository
         $qb = $this->getQueryBuilder();
         $select = [];
         $fields = !empty($fields) ? $fields : $this->getPropertyByGroup('GET');
+        $select[] =  self::ALIAS.'.id as orderId';
         if (!empty($fields)) {
             foreach ($fields as $field) {
                 // Разбиваем строку на части по символу "."
@@ -118,6 +137,13 @@ abstract class BaseRepository
                     $splitForLastTwoElement = $parts;
                     $lastTwoElements = array_splice($splitForLastTwoElement, -2);
                     $implodeKey = implode('.', $lastTwoElements);
+
+
+                    $orderIdKey = sprintf('%1$s.id as %2$s', current($lastTwoElements), current($lastTwoElements) . Paginator::DELIMITER . 'orderId');
+                    if (empty(array_search($orderIdKey, $select))) {
+                        $select[] = $orderIdKey;
+                    }
+
                     $select[] = sprintf('%1$s as %2$s', $implodeKey, implode(Paginator::DELIMITER, $parts));
                 } else {
                     //  "." нет, это поле из таблицы пользователей
@@ -132,7 +158,7 @@ abstract class BaseRepository
         $qb->andWhere(self::ALIAS.'.id = :id')
             ->setParameter('id', $id);
 
-        return $qb->getQuery()->getOneOrNullResult();
+        return $qb->getQuery()->getArrayResult();
     }
 
     /**
