@@ -154,7 +154,7 @@ abstract class BaseRepository
             $select[] = self::ALIAS;
         }
 
-        $qb->select($select);
+//        $qb->select($select);
         $qb->andWhere(self::ALIAS.'.id = :id')
             ->setParameter('id', $id);
 

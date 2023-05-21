@@ -30,32 +30,51 @@ class Paginator
         $this->queryBuilder = $queryBuilder;
     }
 
-    public static function transformArray($array): array
-    {
-        $newArray = array();
-        foreach ($array as $key => $value) {
-            if (is_int($key)) {
-                $newArray[] = self::transformArray($value);
-                continue;
-            }
-            $parts = explode(self::DELIMITER, $key);
-            $subArray =& $newArray;
-            foreach ($parts as $part) {
-                if (!isset($subArray[$part])) {
-                    $subArray[$part] = array();
-                }
-                $subArray =& $subArray[$part];
-            }
-            $subArray = $value;
-        }
-
-        return $newArray;
-    }
-
-    public static function prepareData($array): array
-    {
-        return self::transformArray($array);
-    }
+//    public static function transformArray($array): array
+//    {
+//        $newArray = [];
+//        foreach ($array as $value) {
+//            $orderId = $value['orderId'];
+//            $innerOrderId = null;
+//            foreach ($value as $key => $item) {
+//                if($key === 'orderId'){
+//                    continue;
+//                }
+//                $parts = explode(self::DELIMITER, $key);
+//                if (count($parts) === 1) {
+//                    $newArray[$orderId][$key] = $item;
+//                } else {
+//                    $subArray =& $newArray[$orderId];
+//
+//                    foreach ($parts as $keyPart => $part) {
+//                        if ($part === 'orderId') {
+//                            $innerOrderId = $item;
+//                            continue 2;
+//                        }
+//
+//                        if(count($parts) !== $keyPart + 1) {
+//                            if (!isset($subArray[$part])) {
+//                                $subArray[$part] = [];
+//                            }
+//
+//                            $subArray =& $subArray[$part];
+//                        }
+//                    }
+//                    $subArray[$innerOrderId] = [end($parts) => $item] ;
+//
+////                    $subArray = array_values($subArray);
+//                }
+//            }
+//
+//        }
+//
+//        return array_values($newArray);
+//    }
+//
+//    public static function prepareData($array): array
+//    {
+//        return self::transformArray($array);
+//    }
 
     /**
      * @param int $offset
@@ -84,11 +103,7 @@ class Paginator
         $useOutputWalkers = \count($this->queryBuilder->getDQLPart('having') ?: []) > 0;
         $paginator->setUseOutputWalkers($useOutputWalkers);
 
-//        $result = [];
-//        foreach ($paginator->getIterator() as $item) {
-            $result = self::prepareData($paginator->getIterator());
-//        }
-        $this->results = new ArrayIterator($result);
+        $this->results = $paginator->getIterator();
         $this->numResults = $paginator->count();
 
         return $this;
