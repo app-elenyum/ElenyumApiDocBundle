@@ -40,12 +40,6 @@ use Elenyum\ApiDocBundle\Util\Paginator;
         ]
     )
 )]
-#[OA\Parameter(
-    name: 'field',
-    in: 'query',
-    schema: new OA\Schema(type: 'string'),
-    example: 'id,title'
-)]
 #[Security(name: null)]
 #[OA\Tag(name: '{%uModuleName%}')]
 #[Route(path: '/{%version%}/{%lModuleName%}/{%lEntityName%}/{id<\d+>}', name: '{%lModuleName%}{%entityName%}Get', methods: Request::METHOD_GET)]
@@ -61,13 +55,13 @@ class {%entityName%}GetController extends BaseController
             if (!$repository instanceof GetItemInterface) {
                 throw new Exception('Repository not implements GetItemInterface');
             }
-            $field = empty($request->query->get('field')) ? [] : explode(',', $request->query->get('field'));
-            $data = $repository->getItem($id, $field);
+            /** @var BaseRepository $data */
+            $data = $repository->getItem($id);
 
             return $this->json([
                 'success' => true,
                 'code' => Response::HTTP_OK,
-                'item' => Paginator::transformArray($data),
+                'item' => $data->toArray('GET'),
             ]);
         } catch (Exception $e) {
             return $this->json([

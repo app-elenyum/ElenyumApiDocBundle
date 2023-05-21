@@ -2,12 +2,10 @@
 
 namespace Elenyum\ApiDocBundle\Repository;
 
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping\ManyToMany;
 use Doctrine\ORM\Mapping\ManyToOne;
 use Doctrine\ORM\Mapping\OneToMany;
 use Doctrine\ORM\Mapping\OneToOne;
-use Doctrine\ORM\NonUniqueResultException;
 use Elenyum\ApiDocBundle\Entity\BaseEntity;
 use Elenyum\ApiDocBundle\Util\Paginator;
 use Elenyum\ApiDocBundle\Util\PrepareQueryParams;
@@ -113,66 +111,12 @@ abstract class BaseRepository
     }
 
     /**
-     * @throws \ReflectionException
+     * @param int $id
+     * @return array|null
      */
-    public function getItemsWithFields(int $id, array $fields = []): array
+    public function getItem(int $id): ?BaseEntity
     {
-        $qb = $this->getQueryBuilder();
-        $select = [];
-        $fields = !empty($fields) ? $fields : $this->getPropertyByGroup('GET');
-        $select[] =  self::ALIAS.'.id as orderId';
-        if (!empty($fields)) {
-            foreach ($fields as $field) {
-                // Разбиваем строку на части по символу "."
-                $parts = explode('.', $field);
-
-                if (count($parts) > 1) {
-                    $split = $parts;
-                    foreach (array_slice($split, 0, -1) as $keyElement => $element) {
-                        if (!in_array($element, $this->qb->getAllAliases())) {
-                            $parent = $keyElement === 0 ? self::ALIAS : $parts[$keyElement - 1];
-                            $this->qb->leftJoin($parent.'.'.$element, $element);
-                        }
-                    }
-                    $splitForLastTwoElement = $parts;
-                    $lastTwoElements = array_splice($splitForLastTwoElement, -2);
-                    $implodeKey = implode('.', $lastTwoElements);
-
-
-                    $orderIdKey = sprintf('%1$s.id as %2$s', current($lastTwoElements), current($lastTwoElements) . Paginator::DELIMITER . 'orderId');
-                    if (empty(array_search($orderIdKey, $select))) {
-                        $select[] = $orderIdKey;
-                    }
-
-                    $select[] = sprintf('%1$s as %2$s', $implodeKey, implode(Paginator::DELIMITER, $parts));
-                } else {
-                    //  "." нет, это поле из таблицы пользователей
-                    $select[] = self::ALIAS.'.'.$field;
-                }
-            }
-        } else {
-            $select[] = self::ALIAS;
-        }
-
-//        $qb->select($select);
-        $qb->andWhere(self::ALIAS.'.id = :id')
-            ->setParameter('id', $id);
-
-        return $qb->getQuery()->getArrayResult();
-    }
-
-    /**
-     * @throws \ReflectionException
-     * @throws NonUniqueResultException
-     */
-    public function getItem(int $id, array $fields = []): ?array
-    {
-        $itemsWithFields = $this->getItemsWithFields($id, $fields);
-        if (!empty($itemsWithFields)) {
-            return $itemsWithFields;
-        }
-
-        return null;
+        return $this->findOneBy(['id' => $id]);
     }
 
     public function getItemsForDelete(array $ids): ?array

@@ -30,52 +30,6 @@ class Paginator
         $this->queryBuilder = $queryBuilder;
     }
 
-//    public static function transformArray($array): array
-//    {
-//        $newArray = [];
-//        foreach ($array as $value) {
-//            $orderId = $value['orderId'];
-//            $innerOrderId = null;
-//            foreach ($value as $key => $item) {
-//                if($key === 'orderId'){
-//                    continue;
-//                }
-//                $parts = explode(self::DELIMITER, $key);
-//                if (count($parts) === 1) {
-//                    $newArray[$orderId][$key] = $item;
-//                } else {
-//                    $subArray =& $newArray[$orderId];
-//
-//                    foreach ($parts as $keyPart => $part) {
-//                        if ($part === 'orderId') {
-//                            $innerOrderId = $item;
-//                            continue 2;
-//                        }
-//
-//                        if(count($parts) !== $keyPart + 1) {
-//                            if (!isset($subArray[$part])) {
-//                                $subArray[$part] = [];
-//                            }
-//
-//                            $subArray =& $subArray[$part];
-//                        }
-//                    }
-//                    $subArray[$innerOrderId] = [end($parts) => $item] ;
-//
-////                    $subArray = array_values($subArray);
-//                }
-//            }
-//
-//        }
-//
-//        return array_values($newArray);
-//    }
-//
-//    public static function prepareData($array): array
-//    {
-//        return self::transformArray($array);
-//    }
-
     /**
      * @param int $offset
      * @param int $limit
@@ -96,7 +50,7 @@ class Paginator
             $query->setHint(CountWalker::HINT_DISTINCT, false);
         }
 
-        $query->setHydrationMode(AbstractQuery::HYDRATE_ARRAY);
+        $query->setHydrationMode(AbstractQuery::HYDRATE_OBJECT);
 
         $paginator = new DoctrinePaginator($query, true);
 

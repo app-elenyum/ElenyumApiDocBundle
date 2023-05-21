@@ -85,7 +85,7 @@ class PrepareQueryParams
             }
         }
 
-        $this->qb->select($select);
+//        $this->qb->select($select);
     }
 
     /**

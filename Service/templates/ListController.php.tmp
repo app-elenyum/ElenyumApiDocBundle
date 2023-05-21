@@ -60,12 +60,6 @@ use Symfony\Component\Routing\Annotation\Route;
     example: 0,
 )]
 #[OA\Parameter(
-    name: 'field',
-    in: 'query',
-    schema: new OA\Schema(type: 'string'),
-    example: 'id,title'
-)]
-#[OA\Parameter(
     name: 'filter',
     in: 'query',
     schema: new OA\Schema(type: 'string'),
