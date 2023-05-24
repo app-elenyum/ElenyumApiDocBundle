@@ -506,7 +506,7 @@
                                                  type="text" aria-describedby="text-error"/>
                                     <label for="value">Module name</label>
                                 </span>
-                                <p-button type="button" icon="pi pi-check" label="Add"
+                                <p-button type="button" icon="pi pi-check" label="Save"
                                           @click="onAddModule(moduleEdit.name)"/>
                             </div>
                         </span>
@@ -525,7 +525,7 @@
                                     </div>
                                     <span style="font-size: 0.5em; font-weight: 300">Module name</span>
                                     <p-button class="p-panel-header-icon p-link mr-2" style="float: right"
-                                              @click="moduleToggle($event, moduleName)">
+                                              @click="moduleToggle($event, moduleData.name)">
                                         <span class="pi pi-cog"></span>
                                     </p-button>
                                 </template>
@@ -773,6 +773,7 @@
 
             onAddModule(moduleName) {
                 this.blockedApp = true;
+                localStorage.moduleName = moduleName;
                 this.addModule(moduleName).then((result) => {
                     this.blockedApp = false;
                     this.save(this.modules);
@@ -978,6 +979,7 @@
                                     let count = this.modules[moduleName]['entity'].length + 1;
                                     let newEntity = {
                                         class: 'Entity_' + moduleName + '' + count,
+                                        oldClassName: 'Entity_' + moduleName + '' + count,
                                         roles: {
                                             GET: [],
                                             POST: [],
@@ -1018,7 +1020,7 @@
                                         moduleName = 'newModule_' + length + '' + code,
                                         newEntity = {
                                             class: 'Entity_' + moduleName,
-                                            oldClassName: null,
+                                            oldClassName: 'Entity_' + moduleName,
                                             roles: {
                                                 GET: [],
                                                 POST: [],
