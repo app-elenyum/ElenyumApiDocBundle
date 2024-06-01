@@ -19,7 +19,7 @@ use OpenApi\Generator;
  * @Annotation
  */
 #[\Attribute(\Attribute::TARGET_METHOD)]
-final class Model extends Attachable
+class Model extends Attachable
 {
     /** {@inheritdoc} */
     public static $_types = [
