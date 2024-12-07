@@ -210,7 +210,6 @@ class CreatorService
                 $addProperty->addAttribute('ORM\Column', ['type' => Types::INTEGER]);
                 $addProperty->setType('int');
             } elseif (in_array($columnType, $mapType)) {
-                /** @todo Тут в зависимости от типа добавляем атрибуты ManyToMany, ManyToOne... */
                 unset($property['column']['type']);
 
                 if (isset($property['column']['nullable'])) {
