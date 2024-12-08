@@ -141,7 +141,14 @@ final class IndexController extends AbstractController
                         'files' => $createdFiles,
                     ]);
                 } catch (\Throwable $e) {
-                    dd($e);
+                    return $this->json([
+                        'success' => false,
+                        'error' => [
+                            'message' => $e->getMessage(),
+                            'file' => $e->getFile(),
+                            'line' => $e->getLine()
+                        ],
+                    ]);
                 }
         }
 
